@@ -1,0 +1,689 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Solarist | Huzaifa Khan — Solar Design & Engineering Automation</title>
+  <meta name="description" content="Portfolio of Huzaifa Khan, a solar design engineer with 8+ years of engineering experience across commercial solar, BESS, permit design, and engineering automation.">
+  <meta name="theme-color" content="#081b24">
+  <meta property="og:title" content="Solarist | Huzaifa Khan">
+  <meta property="og:description" content="Solar design, BESS engineering, permit-ready documentation, and practical engineering automation.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://solarist.in/">
+  <link rel="canonical" href="https://solarist.in/">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2222%22 fill=%22%23f4b942%22/><g stroke=%22%23f4b942%22 stroke-width=%228%22 stroke-linecap=%22round%22><path d=%22M50 5v12M50 83v12M5 50h12M83 50h12M18 18l9 9M73 73l9 9M82 18l-9 9M27 73l-9 9%22/></g></svg>">
+  <style>
+    :root {
+      --ink: #10232a;
+      --muted: #5f7076;
+      --surface: #f5f7f4;
+      --paper: #ffffff;
+      --navy: #081b24;
+      --navy-2: #0d2b35;
+      --green: #3d8b6d;
+      --green-soft: #dcebe4;
+      --sun: #f4b942;
+      --line: rgba(16, 35, 42, .12);
+      --shadow: 0 22px 60px rgba(4, 24, 31, .12);
+      --radius: 24px;
+      --max: 1160px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--surface);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; }
+    img, svg { display: block; max-width: 100%; }
+    .wrap { width: min(var(--max), calc(100% - 40px)); margin-inline: auto; }
+
+    .site-header {
+      position: fixed;
+      inset: 0 0 auto;
+      z-index: 100;
+      transition: background .25s ease, box-shadow .25s ease, backdrop-filter .25s ease;
+    }
+    .site-header.scrolled {
+      background: rgba(8, 27, 36, .88);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, .12);
+    }
+    .nav {
+      min-height: 76px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: #fff;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .brand-mark {
+      width: 34px;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: var(--sun);
+      box-shadow: 0 0 0 7px rgba(244, 185, 66, .12);
+      position: relative;
+    }
+    .brand-mark::after {
+      content: "";
+      position: absolute;
+      width: 12px;
+      height: 24px;
+      right: -4px;
+      bottom: -7px;
+      background: var(--green);
+      border-radius: 100% 0 100% 0;
+      transform: rotate(-18deg);
+    }
+    .nav-links { display: flex; align-items: center; gap: 28px; }
+    .nav-links a {
+      color: rgba(255,255,255,.76);
+      text-decoration: none;
+      font-size: .94rem;
+      font-weight: 650;
+      transition: color .2s ease;
+    }
+    .nav-links a:hover { color: #fff; }
+    .nav-links .nav-cta {
+      color: var(--navy);
+      background: var(--sun);
+      padding: 10px 16px;
+      border-radius: 999px;
+    }
+
+    .hero {
+      min-height: 760px;
+      display: grid;
+      align-items: center;
+      padding: 142px 0 96px;
+      color: #fff;
+      overflow: hidden;
+      position: relative;
+      background:
+        radial-gradient(circle at 80% 18%, rgba(244,185,66,.20), transparent 24%),
+        radial-gradient(circle at 6% 70%, rgba(61,139,109,.22), transparent 28%),
+        linear-gradient(135deg, var(--navy), #0b2530 60%, #123640);
+    }
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      opacity: .17;
+      background-image:
+        linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: linear-gradient(to bottom, #000, transparent 85%);
+    }
+    .hero-grid {
+      position: relative;
+      display: grid;
+      grid-template-columns: 1.15fr .85fr;
+      align-items: center;
+      gap: 72px;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 22px;
+      font-size: .82rem;
+      font-weight: 800;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+      color: #b9d9cc;
+    }
+    .eyebrow::before {
+      content: "";
+      width: 32px;
+      height: 2px;
+      background: var(--sun);
+    }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 {
+      margin-bottom: 24px;
+      font-size: clamp(3.35rem, 7vw, 6.8rem);
+      line-height: .96;
+      letter-spacing: -.065em;
+      max-width: 780px;
+    }
+    h1 span { color: var(--sun); }
+    .hero-copy {
+      max-width: 690px;
+      color: rgba(255,255,255,.76);
+      font-size: clamp(1.05rem, 1.8vw, 1.22rem);
+    }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 34px; }
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-height: 52px;
+      padding: 0 22px;
+      border-radius: 999px;
+      text-decoration: none;
+      font-weight: 800;
+      transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+    }
+    .button:hover { transform: translateY(-2px); }
+    .button-primary { color: var(--navy); background: var(--sun); box-shadow: 0 12px 32px rgba(244,185,66,.19); }
+    .button-secondary { color: #fff; border: 1px solid rgba(255,255,255,.25); background: rgba(255,255,255,.04); }
+    .button svg { width: 18px; }
+    .hero-note { margin-top: 22px; color: rgba(255,255,255,.48); font-size: .88rem; }
+
+    .solar-visual {
+      min-height: 500px;
+      position: relative;
+      display: grid;
+      place-items: center;
+    }
+    .orbit {
+      width: min(430px, 90vw);
+      aspect-ratio: 1;
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 50%;
+      position: relative;
+      display: grid;
+      place-items: center;
+    }
+    .orbit::before, .orbit::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,.10);
+    }
+    .orbit::before { inset: 14%; }
+    .orbit::after { inset: 29%; }
+    .sun-disc {
+      width: 128px;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #ffe09a, var(--sun) 48%, #d99018 100%);
+      box-shadow: 0 0 90px rgba(244,185,66,.34);
+      position: relative;
+      z-index: 2;
+    }
+    .panel {
+      position: absolute;
+      width: 148px;
+      height: 94px;
+      padding: 8px;
+      border: 1px solid rgba(255,255,255,.35);
+      border-radius: 10px;
+      background: linear-gradient(145deg, #174d61, #0b2937);
+      box-shadow: var(--shadow);
+      transform: perspective(300px) rotateX(58deg) rotateZ(-24deg);
+      overflow: hidden;
+    }
+    .panel::before {
+      content: "";
+      position: absolute;
+      inset: 7px;
+      background-image:
+        linear-gradient(rgba(255,255,255,.20) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.20) 1px, transparent 1px);
+      background-size: 24px 22px;
+    }
+    .panel-one { top: 12%; right: -2%; }
+    .panel-two { bottom: 10%; left: -3%; transform: perspective(300px) rotateX(58deg) rotateZ(20deg); }
+    .metric-chip {
+      position: absolute;
+      z-index: 3;
+      padding: 13px 17px;
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 16px;
+      background: rgba(8,27,36,.72);
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow);
+    }
+    .metric-chip strong { display: block; font-size: 1.15rem; color: #fff; }
+    .metric-chip span { color: rgba(255,255,255,.60); font-size: .77rem; }
+    .chip-one { left: 1%; top: 24%; }
+    .chip-two { right: 2%; bottom: 18%; }
+
+    section { padding: 110px 0; }
+    .section-kicker {
+      color: var(--green);
+      font-size: .78rem;
+      font-weight: 850;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .section-head { max-width: 760px; margin-bottom: 50px; }
+    .section-head h2 {
+      margin-bottom: 18px;
+      font-size: clamp(2.2rem, 4.4vw, 4rem);
+      line-height: 1.05;
+      letter-spacing: -.045em;
+    }
+    .section-head p { color: var(--muted); font-size: 1.06rem; }
+
+    .stats {
+      margin-top: -54px;
+      position: relative;
+      z-index: 5;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      background: var(--paper);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .stat { padding: 30px; border-right: 1px solid var(--line); }
+    .stat:last-child { border-right: 0; }
+    .stat strong {
+      display: block;
+      margin-bottom: 5px;
+      font-size: clamp(2rem, 4vw, 3.15rem);
+      line-height: 1;
+      letter-spacing: -.05em;
+      color: var(--navy);
+    }
+    .stat span { color: var(--muted); font-size: .9rem; }
+
+    .about-grid {
+      display: grid;
+      grid-template-columns: .8fr 1.2fr;
+      gap: 80px;
+      align-items: start;
+    }
+    .about-card {
+      position: sticky;
+      top: 110px;
+      padding: 34px;
+      color: #fff;
+      background: var(--navy);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .about-card::after {
+      content: "";
+      position: absolute;
+      width: 170px;
+      aspect-ratio: 1;
+      right: -50px;
+      bottom: -60px;
+      border-radius: 50%;
+      background: var(--sun);
+      opacity: .12;
+    }
+    .monogram {
+      width: 74px;
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+      margin-bottom: 52px;
+      border-radius: 22px;
+      font-size: 1.35rem;
+      font-weight: 900;
+      background: var(--sun);
+      color: var(--navy);
+    }
+    .about-card h3 { margin-bottom: 8px; font-size: 1.6rem; }
+    .about-card p { color: rgba(255,255,255,.62); }
+    .about-card .location { margin-top: 28px; color: #b9d9cc; font-size: .9rem; }
+    .about-copy > p { color: var(--muted); font-size: 1.12rem; }
+    .about-copy .lead { color: var(--ink); font-size: clamp(1.45rem, 2.5vw, 2.05rem); line-height: 1.42; letter-spacing: -.025em; }
+    .pill-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 32px; }
+    .pill {
+      padding: 9px 13px;
+      border-radius: 999px;
+      color: #275944;
+      background: var(--green-soft);
+      font-size: .84rem;
+      font-weight: 750;
+    }
+
+    .expertise { background: #eaf0ec; }
+    .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .card {
+      min-height: 270px;
+      padding: 28px;
+      border: 1px solid rgba(16,35,42,.08);
+      border-radius: 20px;
+      background: rgba(255,255,255,.76);
+      transition: transform .22s ease, box-shadow .22s ease, background .22s ease;
+    }
+    .card:hover { transform: translateY(-5px); box-shadow: 0 20px 50px rgba(8,27,36,.09); background: #fff; }
+    .icon {
+      width: 48px;
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+      margin-bottom: 28px;
+      border-radius: 14px;
+      color: var(--navy);
+      background: var(--sun);
+      font-weight: 900;
+    }
+    .card h3 { margin-bottom: 10px; font-size: 1.2rem; }
+    .card p { margin-bottom: 0; color: var(--muted); font-size: .94rem; }
+
+    .track-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .track-panel {
+      padding: 38px;
+      border-radius: var(--radius);
+      background: var(--paper);
+      border: 1px solid var(--line);
+    }
+    .track-panel.dark { background: var(--navy); color: #fff; border-color: transparent; }
+    .track-panel h3 { font-size: 1.65rem; margin-bottom: 20px; }
+    .track-panel p { color: var(--muted); }
+    .track-panel.dark p { color: rgba(255,255,255,.65); }
+    .check-list { list-style: none; padding: 0; margin: 28px 0 0; }
+    .check-list li {
+      display: grid;
+      grid-template-columns: 24px 1fr;
+      gap: 12px;
+      padding: 14px 0;
+      border-top: 1px solid var(--line);
+    }
+    .dark .check-list li { border-color: rgba(255,255,255,.12); }
+    .check { color: var(--green); font-weight: 900; }
+    .dark .check { color: var(--sun); }
+
+    .tools { background: var(--navy); color: #fff; }
+    .tools .section-kicker { color: var(--sun); }
+    .tools .section-head p { color: rgba(255,255,255,.62); }
+    .tool-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+    .tool-card {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 18px;
+      padding: 26px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 20px;
+      background: rgba(255,255,255,.04);
+    }
+    .tool-number {
+      width: 42px;
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      color: var(--navy);
+      background: var(--sun);
+      font-weight: 900;
+    }
+    .tool-card h3 { margin-bottom: 6px; font-size: 1.1rem; }
+    .tool-card p { margin-bottom: 0; color: rgba(255,255,255,.58); font-size: .9rem; }
+
+    .cta {
+      padding: 90px 0;
+      background: var(--sun);
+    }
+    .cta-grid {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 36px;
+      align-items: center;
+    }
+    .cta h2 { margin-bottom: 12px; max-width: 780px; font-size: clamp(2.25rem, 5vw, 4.7rem); line-height: 1; letter-spacing: -.055em; }
+    .cta p { margin-bottom: 0; color: rgba(8,27,36,.70); font-size: 1.05rem; }
+    .cta .button { background: var(--navy); color: #fff; }
+
+    footer { padding: 34px 0; background: #06151c; color: rgba(255,255,255,.55); }
+    .footer-grid { display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+    footer a { color: #fff; text-decoration: none; font-weight: 700; }
+
+    .reveal { opacity: 0; transform: translateY(22px); transition: opacity .65s ease, transform .65s ease; }
+    .reveal.visible { opacity: 1; transform: none; }
+
+    @media (max-width: 900px) {
+      .nav-links a:not(.nav-cta) { display: none; }
+      .hero-grid, .about-grid, .track-grid, .cta-grid { grid-template-columns: 1fr; }
+      .hero { min-height: auto; }
+      .hero-grid { gap: 38px; }
+      .solar-visual { min-height: 400px; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .stat:nth-child(2) { border-right: 0; }
+      .stat:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+      .about-grid { gap: 42px; }
+      .about-card { position: relative; top: auto; }
+      .cards { grid-template-columns: repeat(2, 1fr); }
+      .cta-grid { justify-items: start; }
+    }
+
+    @media (max-width: 620px) {
+      .wrap { width: min(var(--max), calc(100% - 28px)); }
+      .nav { min-height: 68px; }
+      .brand { font-size: .9rem; }
+      .nav-links .nav-cta { padding: 9px 13px; }
+      .hero { padding: 116px 0 78px; }
+      h1 { font-size: clamp(3rem, 18vw, 4.8rem); }
+      .solar-visual { min-height: 330px; }
+      .orbit { width: 290px; }
+      .sun-disc { width: 92px; }
+      .panel { width: 108px; height: 72px; }
+      .metric-chip { padding: 10px 12px; }
+      .metric-chip strong { font-size: .94rem; }
+      .metric-chip span { font-size: .65rem; }
+      section { padding: 78px 0; }
+      .stats { margin-top: -34px; }
+      .stat { padding: 22px 18px; }
+      .stat strong { font-size: 2.15rem; }
+      .cards, .tool-grid { grid-template-columns: 1fr; }
+      .card { min-height: auto; }
+      .track-panel { padding: 28px 24px; }
+      .cta { padding: 68px 0; }
+      .footer-grid { align-items: flex-start; flex-direction: column; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+      .reveal { opacity: 1; transform: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header" id="siteHeader">
+    <div class="wrap nav">
+      <a class="brand" href="#top" aria-label="Solarist home"><span class="brand-mark" aria-hidden="true"></span>Solarist</a>
+      <nav class="nav-links" aria-label="Primary navigation">
+        <a href="#about">About</a>
+        <a href="#expertise">Expertise</a>
+        <a href="#track-record">Track record</a>
+        <a href="#tools">Tools</a>
+        <a class="nav-cta" href="https://www.linkedin.com/in/huzaifarjkhan/" target="_blank" rel="noopener noreferrer">LinkedIn ↗</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="wrap hero-grid">
+        <div>
+          <div class="eyebrow">Solar engineering · automation · AI</div>
+          <h1>Engineering sunlight into <span>real systems.</span></h1>
+          <p class="hero-copy">I’m Huzaifa Khan, a solar design engineer and automation builder working across commercial PV, battery energy storage, permit-ready design, and practical engineering software.</p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="https://www.linkedin.com/in/huzaifarjkhan/" target="_blank" rel="noopener noreferrer">
+              Connect on LinkedIn
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M13.5 5.5 20 12l-6.5 6.5-1.4-1.4 4.1-4.1H4v-2h12.2l-4.1-4.1 1.4-1.4Z"/></svg>
+            </a>
+            <a class="button button-secondary" href="#track-record">View track record</a>
+          </div>
+          <p class="hero-note">Based in India · U.S. solar market experience</p>
+        </div>
+
+        <div class="solar-visual" aria-hidden="true">
+          <div class="orbit">
+            <div class="panel panel-one"></div>
+            <div class="panel panel-two"></div>
+            <div class="sun-disc"></div>
+            <div class="metric-chip chip-one"><strong>20+ AHJs</strong><span>California jurisdictions</span></div>
+            <div class="metric-chip chip-two"><strong>1.19 MW</strong><span>Largest single project</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="stats">
+      <div class="wrap stats-grid reveal">
+        <div class="stat"><strong>8+</strong><span>Years of engineering experience</span></div>
+        <div class="stat"><strong>65+</strong><span>Commercial solar projects delivered</span></div>
+        <div class="stat"><strong>70+</strong><span>Permit-ready packages produced independently</span></div>
+        <div class="stat"><strong>18 kW–1.19 MW</strong><span>Project design range</span></div>
+      </div>
+    </div>
+
+    <section id="about">
+      <div class="wrap about-grid">
+        <aside class="about-card reveal">
+          <div class="monogram">HK</div>
+          <h3>Huzaifa Khan</h3>
+          <p>Solar Design Engineer<br>Civil Engineering Graduate<br>Engineering Automation Builder</p>
+          <div class="location">Navi Mumbai, India · Supporting U.S. projects</div>
+        </aside>
+        <div class="about-copy reveal">
+          <div class="section-kicker">About</div>
+          <p class="lead">I combine field-aware engineering judgment, permit documentation experience, and software thinking to make solar design work more reliable and efficient.</p>
+          <p>My experience spans commercial and residential solar PV, BESS, solar thermal, and PVT hybrid systems. I have supported projects across a wide range of California authorities having jurisdiction, including demanding DSA-level submittals and multiple utility territories.</p>
+          <p>Alongside design work, I build calculators, AI agents, and workflow automation tools for real engineering operations—not just demonstrations. The goal is always the same: fewer mistakes, faster decisions, and clearer deliverables.</p>
+          <div class="pill-row" aria-label="Professional focus areas">
+            <span class="pill">Commercial PV</span>
+            <span class="pill">Battery Energy Storage</span>
+            <span class="pill">NEC Compliance</span>
+            <span class="pill">Permit Plan Sets</span>
+            <span class="pill">AHJ Coordination</span>
+            <span class="pill">Engineering Automation</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="expertise" id="expertise">
+      <div class="wrap">
+        <div class="section-head reveal">
+          <div class="section-kicker">Core expertise</div>
+          <h2>From system concept to permit-ready documentation.</h2>
+          <p>Practical design experience across electrical, architectural, structural, fire-code, and utility coordination requirements.</p>
+        </div>
+        <div class="cards">
+          <article class="card reveal"><div class="icon">01</div><h3>Solar PV & BESS Design</h3><p>System layouts and documentation for rooftop, commercial, residential, and storage-integrated projects in the U.S. market.</p></article>
+          <article class="card reveal"><div class="icon">02</div><h3>Permit Plan Sets</h3><p>NEC-conscious plan development, single-line diagrams, equipment schedules, calculations, notes, and coordinated drawing packages.</p></article>
+          <article class="card reveal"><div class="icon">03</div><h3>AHJ & Utility Coordination</h3><p>Experience across 20+ California jurisdictions, varied utility territories, municipal reviews, and DSA submittals.</p></article>
+          <article class="card reveal"><div class="icon">04</div><h3>Multidisciplinary Coordination</h3><p>Coordination with architectural, structural, mechanical, electrical, fire-life-safety, and construction requirements.</p></article>
+          <article class="card reveal"><div class="icon">05</div><h3>Solar Thermal & PVT</h3><p>Design exposure extending beyond conventional PV to solar thermal and hybrid photovoltaic-thermal systems.</p></article>
+          <article class="card reveal"><div class="icon">06</div><h3>Automation & AI</h3><p>Engineering calculators, workflow systems, AI agents, voice AI, and Firebase-based applications built around real operational needs.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="track-record">
+      <div class="wrap">
+        <div class="section-head reveal">
+          <div class="section-kicker">Built on real experience</div>
+          <h2>Credibility grounded in delivered work.</h2>
+          <p>A track record shaped by technically varied projects, rigorous reviews, and production engineering environments.</p>
+        </div>
+        <div class="track-grid">
+          <article class="track-panel reveal">
+            <h3>Engineering track record</h3>
+            <p>Project experience spanning affordable housing, government infrastructure, retail, educational facilities, and other commercial applications.</p>
+            <ul class="check-list">
+              <li><span class="check">✓</span><span>65+ delivered commercial solar projects</span></li>
+              <li><span class="check">✓</span><span>Systems ranging from 18 kW rooftops to 1.19 MW installations</span></li>
+              <li><span class="check">✓</span><span>20+ California AHJ jurisdictions and multiple utility territories</span></li>
+              <li><span class="check">✓</span><span>70+ permit-ready design packages independently produced in a previous role</span></li>
+            </ul>
+          </article>
+          <article class="track-panel dark reveal">
+            <h3>How I work</h3>
+            <p>Good engineering is not only a correct calculation. It is a coordinated, reviewable, buildable package that makes decisions clear to every stakeholder.</p>
+            <ul class="check-list">
+              <li><span class="check">✓</span><span>Code-conscious and detail-oriented</span></li>
+              <li><span class="check">✓</span><span>Comfortable with complex review comments and design revisions</span></li>
+              <li><span class="check">✓</span><span>Focused on constructability and interdisciplinary conflicts</span></li>
+              <li><span class="check">✓</span><span>Automation-minded approach to repetitive engineering work</span></li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="tools" id="tools">
+      <div class="wrap">
+        <div class="section-head reveal">
+          <div class="section-kicker">Engineering tools & software</div>
+          <h2>Software built to solve technical work.</h2>
+          <p>Independent tools and systems designed around accuracy, speed, repeatability, and usability in production environments.</p>
+        </div>
+        <div class="tool-grid">
+          <article class="tool-card reveal"><div class="tool-number">01</div><div><h3>Voltage Drop Calculator</h3><p>An NEC-conscious electrical calculator built and deployed for active use in a U.S.-based commercial solar engineering environment.</p></div></article>
+          <article class="tool-card reveal"><div class="tool-number">02</div><div><h3>SCCR Fault Current Calculator</h3><p>A focused tool for short-circuit current rating and fault-current evaluation workflows.</p></div></article>
+          <article class="tool-card reveal"><div class="tool-number">03</div><div><h3>Master Electrical Calculator</h3><p>Combined workflows for string sizing, conductor ampacity, conduit fill, and overcurrent protection calculations.</p></div></article>
+          <article class="tool-card reveal"><div class="tool-number">04</div><div><h3>AI & Workflow Systems</h3><p>AI agents, voice AI systems, workflow automation, and Firebase web applications designed for real operational problems.</p></div></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta" id="contact">
+      <div class="wrap cta-grid reveal">
+        <div>
+          <h2>Let’s connect around solar engineering and smarter workflows.</h2>
+          <p>Professional connections, technical conversations, and engineering collaboration are welcome.</p>
+        </div>
+        <a class="button" href="https://www.linkedin.com/in/huzaifarjkhan/" target="_blank" rel="noopener noreferrer">View LinkedIn profile ↗</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap footer-grid">
+      <span>© <span id="year"></span> Solarist. A professional portfolio by Huzaifa Khan.</span>
+      <a href="https://www.linkedin.com/in/huzaifarjkhan/" target="_blank" rel="noopener noreferrer">LinkedIn ↗</a>
+    </div>
+  </footer>
+
+  <script>
+    const header = document.getElementById('siteHeader');
+    const setHeader = () => header.classList.toggle('scrolled', window.scrollY > 18);
+    setHeader();
+    window.addEventListener('scroll', setHeader, { passive: true });
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    const reveal = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          reveal.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    document.querySelectorAll('.reveal').forEach((element) => reveal.observe(element));
+  </script>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": "Huzaifa Khan",
+    "url": "https://solarist.in/",
+    "sameAs": ["https://www.linkedin.com/in/huzaifarjkhan/"],
+    "jobTitle": "Solar Design Engineer",
+    "knowsAbout": ["Solar PV Design", "Battery Energy Storage Systems", "NEC Permit Design", "Engineering Automation", "Artificial Intelligence"]
+  }
+  </script>
+</body>
+</html>
