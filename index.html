@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Solarist | Huzaifa Khan — Solar Design & Engineering Automation</title>
-  <meta name="description" content="Portfolio of Huzaifa Khan, a solar design engineer with 8+ years of engineering experience across commercial solar, BESS, permit design, and engineering automation.">
+  <title>Solarist | Solar Engineering, Automation & Revit BIM Services</title>
+  <meta name="description" content="Solarist is an engineering and automation practice founded by Huzaifa Khan, providing solar PV and BESS design support, AI workflow automation, and Autodesk Revit family services.">
   <meta name="theme-color" content="#081b24">
-  <meta property="og:title" content="Solarist | Huzaifa Khan">
-  <meta property="og:description" content="Solar design, BESS engineering, permit-ready documentation, and practical engineering automation.">
+  <meta property="og:title" content="Solarist | Engineering & Automation Practice">
+  <meta property="og:description" content="Solar PV and BESS design support, practical AI automation, and Autodesk Revit family services for technical businesses.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://solarist.in/">
   <link rel="canonical" href="https://solarist.in/">
@@ -15,16 +15,16 @@
   <style>
     :root {
       --ink: #10232a;
-      --muted: #5f7076;
+      --muted: #607278;
       --surface: #f5f7f4;
-      --paper: #ffffff;
+      --paper: #fff;
       --navy: #081b24;
-      --navy-2: #0d2b35;
+      --navy-2: #0f303a;
       --green: #3d8b6d;
       --green-soft: #dcebe4;
       --sun: #f4b942;
-      --line: rgba(16, 35, 42, .12);
-      --shadow: 0 22px 60px rgba(4, 24, 31, .12);
+      --line: rgba(16,35,42,.12);
+      --shadow: 0 22px 60px rgba(4,24,31,.12);
       --radius: 24px;
       --max: 1160px;
     }
@@ -40,8 +40,11 @@
       -webkit-font-smoothing: antialiased;
     }
     a { color: inherit; }
-    img, svg { display: block; max-width: 100%; }
+    button { font: inherit; }
     .wrap { width: min(var(--max), calc(100% - 40px)); margin-inline: auto; }
+    .skip-link { position: fixed; left: 12px; top: -80px; z-index: 999; padding: 10px 14px; background: #fff; color: var(--navy); border-radius: 8px; }
+    .skip-link:focus { top: 12px; }
+    :focus-visible { outline: 3px solid var(--sun); outline-offset: 3px; }
 
     .site-header {
       position: fixed;
@@ -49,10 +52,11 @@
       z-index: 100;
       transition: background .25s ease, box-shadow .25s ease, backdrop-filter .25s ease;
     }
-    .site-header.scrolled {
-      background: rgba(8, 27, 36, .88);
+    .site-header.scrolled,
+    .site-header.menu-open {
+      background: rgba(8,27,36,.94);
       backdrop-filter: blur(14px);
-      box-shadow: 0 8px 30px rgba(0, 0, 0, .12);
+      box-shadow: 0 8px 30px rgba(0,0,0,.14);
     }
     .nav {
       min-height: 76px;
@@ -65,19 +69,19 @@
       display: inline-flex;
       align-items: center;
       gap: 12px;
-      text-decoration: none;
       color: #fff;
-      font-weight: 800;
+      text-decoration: none;
+      font-weight: 850;
       letter-spacing: .08em;
       text-transform: uppercase;
     }
     .brand-mark {
       width: 34px;
       aspect-ratio: 1;
+      position: relative;
       border-radius: 50%;
       background: var(--sun);
-      box-shadow: 0 0 0 7px rgba(244, 185, 66, .12);
-      position: relative;
+      box-shadow: 0 0 0 7px rgba(244,185,66,.12);
     }
     .brand-mark::after {
       content: "";
@@ -90,13 +94,12 @@
       border-radius: 100% 0 100% 0;
       transform: rotate(-18deg);
     }
-    .nav-links { display: flex; align-items: center; gap: 28px; }
+    .nav-links { display: flex; align-items: center; gap: 25px; }
     .nav-links a {
-      color: rgba(255,255,255,.76);
+      color: rgba(255,255,255,.75);
       text-decoration: none;
-      font-size: .94rem;
-      font-weight: 650;
-      transition: color .2s ease;
+      font-size: .92rem;
+      font-weight: 700;
     }
     .nav-links a:hover { color: #fff; }
     .nav-links .nav-cta {
@@ -105,12 +108,27 @@
       padding: 10px 16px;
       border-radius: 999px;
     }
+    .menu-button {
+      display: none;
+      border: 0;
+      color: #fff;
+      background: transparent;
+      padding: 8px;
+      cursor: pointer;
+    }
+    .menu-button span {
+      display: block;
+      width: 24px;
+      height: 2px;
+      margin: 5px 0;
+      background: currentColor;
+    }
 
     .hero {
       min-height: 760px;
       display: grid;
       align-items: center;
-      padding: 142px 0 96px;
+      padding: 142px 0 100px;
       color: #fff;
       overflow: hidden;
       position: relative;
@@ -128,108 +146,91 @@
         linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px),
         linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px);
       background-size: 48px 48px;
-      mask-image: linear-gradient(to bottom, #000, transparent 85%);
+      mask-image: linear-gradient(to bottom, #000, transparent 86%);
     }
     .hero-grid {
       position: relative;
       display: grid;
       grid-template-columns: 1.15fr .85fr;
       align-items: center;
-      gap: 72px;
+      gap: 70px;
     }
     .eyebrow {
       display: inline-flex;
       align-items: center;
       gap: 10px;
       margin-bottom: 22px;
+      color: #b9d9cc;
       font-size: .82rem;
-      font-weight: 800;
+      font-weight: 850;
       letter-spacing: .13em;
       text-transform: uppercase;
-      color: #b9d9cc;
     }
-    .eyebrow::before {
-      content: "";
-      width: 32px;
-      height: 2px;
-      background: var(--sun);
-    }
+    .eyebrow::before { content: ""; width: 32px; height: 2px; background: var(--sun); }
     h1, h2, h3, p { margin-top: 0; }
     h1 {
+      max-width: 790px;
       margin-bottom: 24px;
-      font-size: clamp(3.35rem, 7vw, 6.8rem);
+      font-size: clamp(3.25rem, 7vw, 6.55rem);
       line-height: .96;
       letter-spacing: -.065em;
-      max-width: 780px;
     }
     h1 span { color: var(--sun); }
     .hero-copy {
-      max-width: 690px;
+      max-width: 745px;
       color: rgba(255,255,255,.76);
-      font-size: clamp(1.05rem, 1.8vw, 1.22rem);
+      font-size: clamp(1.04rem, 1.75vw, 1.2rem);
     }
     .hero-actions { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 34px; }
     .button {
+      min-height: 52px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
-      min-height: 52px;
+      gap: 9px;
       padding: 0 22px;
       border-radius: 999px;
       text-decoration: none;
-      font-weight: 800;
-      transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+      font-weight: 850;
+      transition: transform .2s ease, box-shadow .2s ease;
     }
     .button:hover { transform: translateY(-2px); }
     .button-primary { color: var(--navy); background: var(--sun); box-shadow: 0 12px 32px rgba(244,185,66,.19); }
     .button-secondary { color: #fff; border: 1px solid rgba(255,255,255,.25); background: rgba(255,255,255,.04); }
-    .button svg { width: 18px; }
-    .hero-note { margin-top: 22px; color: rgba(255,255,255,.48); font-size: .88rem; }
+    .hero-note { margin-top: 22px; color: rgba(255,255,255,.49); font-size: .88rem; }
 
-    .solar-visual {
-      min-height: 500px;
+    .solar-visual { min-height: 480px; position: relative; display: grid; place-items: center; }
+    .orbit {
+      width: min(420px, 90vw);
+      aspect-ratio: 1;
       position: relative;
       display: grid;
       place-items: center;
-    }
-    .orbit {
-      width: min(430px, 90vw);
-      aspect-ratio: 1;
       border: 1px solid rgba(255,255,255,.14);
       border-radius: 50%;
-      position: relative;
-      display: grid;
-      place-items: center;
     }
-    .orbit::before, .orbit::after {
-      content: "";
-      position: absolute;
-      border-radius: 50%;
-      border: 1px solid rgba(255,255,255,.10);
-    }
+    .orbit::before, .orbit::after { content: ""; position: absolute; border-radius: 50%; border: 1px solid rgba(255,255,255,.10); }
     .orbit::before { inset: 14%; }
     .orbit::after { inset: 29%; }
     .sun-disc {
-      width: 128px;
+      width: 126px;
       aspect-ratio: 1;
+      z-index: 2;
       border-radius: 50%;
       background: radial-gradient(circle at 35% 35%, #ffe09a, var(--sun) 48%, #d99018 100%);
       box-shadow: 0 0 90px rgba(244,185,66,.34);
-      position: relative;
-      z-index: 2;
     }
     .panel {
       position: absolute;
       width: 148px;
       height: 94px;
       padding: 8px;
+      overflow: hidden;
       border: 1px solid rgba(255,255,255,.35);
       border-radius: 10px;
       background: linear-gradient(145deg, #174d61, #0b2937);
       box-shadow: var(--shadow);
       transform: perspective(300px) rotateX(58deg) rotateZ(-24deg);
-      overflow: hidden;
     }
     .panel::before {
       content: "";
@@ -252,21 +253,21 @@
       backdrop-filter: blur(12px);
       box-shadow: var(--shadow);
     }
-    .metric-chip strong { display: block; font-size: 1.15rem; color: #fff; }
+    .metric-chip strong { display: block; color: #fff; font-size: 1.15rem; }
     .metric-chip span { color: rgba(255,255,255,.60); font-size: .77rem; }
     .chip-one { left: 1%; top: 24%; }
     .chip-two { right: 2%; bottom: 18%; }
 
-    section { padding: 110px 0; }
+    section { padding: 108px 0; }
     .section-kicker {
+      margin-bottom: 12px;
       color: var(--green);
       font-size: .78rem;
       font-weight: 850;
       letter-spacing: .14em;
       text-transform: uppercase;
-      margin-bottom: 12px;
     }
-    .section-head { max-width: 760px; margin-bottom: 50px; }
+    .section-head { max-width: 790px; margin-bottom: 50px; }
     .section-head h2 {
       margin-bottom: 18px;
       font-size: clamp(2.2rem, 4.4vw, 4rem);
@@ -275,45 +276,74 @@
     }
     .section-head p { color: var(--muted); font-size: 1.06rem; }
 
-    .stats {
-      margin-top: -54px;
-      position: relative;
-      z-index: 5;
-    }
+    .stats { position: relative; z-index: 5; margin-top: -54px; }
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
+      overflow: hidden;
       background: var(--paper);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
-      overflow: hidden;
     }
     .stat { padding: 30px; border-right: 1px solid var(--line); }
     .stat:last-child { border-right: 0; }
     .stat strong {
       display: block;
       margin-bottom: 5px;
-      font-size: clamp(2rem, 4vw, 3.15rem);
+      color: var(--navy);
+      font-size: clamp(2rem, 4vw, 3.1rem);
       line-height: 1;
       letter-spacing: -.05em;
-      color: var(--navy);
     }
     .stat span { color: var(--muted); font-size: .9rem; }
 
-    .about-grid {
-      display: grid;
-      grid-template-columns: .8fr 1.2fr;
-      gap: 80px;
-      align-items: start;
+    .services { background: #eaf0ec; }
+    .service-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .service-card {
+      min-height: 440px;
+      display: flex;
+      flex-direction: column;
+      padding: 32px;
+      background: #fff;
+      border: 1px solid rgba(16,35,42,.08);
+      border-radius: var(--radius);
+      box-shadow: 0 14px 35px rgba(8,27,36,.06);
     }
+    .service-number {
+      width: 48px;
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+      margin-bottom: 30px;
+      color: var(--navy);
+      background: var(--sun);
+      border-radius: 14px;
+      font-weight: 900;
+    }
+    .service-card h3 { margin-bottom: 12px; font-size: 1.48rem; line-height: 1.2; }
+    .service-card > p { color: var(--muted); }
+    .service-list { list-style: none; padding: 0; margin: 22px 0 0; }
+    .service-list li { padding: 10px 0; border-top: 1px solid var(--line); font-size: .91rem; }
+    .service-for {
+      margin-top: auto;
+      padding-top: 24px;
+      color: var(--green);
+      font-size: .82rem;
+      font-weight: 850;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+    .service-note { max-width: 880px; margin: 28px 0 0; color: var(--muted); font-size: .84rem; }
+
+    .about-grid { display: grid; grid-template-columns: .8fr 1.2fr; gap: 80px; align-items: start; }
     .about-card {
       position: sticky;
       top: 110px;
       padding: 34px;
+      overflow: hidden;
       color: #fff;
       background: var(--navy);
       border-radius: var(--radius);
-      overflow: hidden;
     }
     .about-card::after {
       content: "";
@@ -332,76 +362,59 @@
       display: grid;
       place-items: center;
       margin-bottom: 52px;
+      color: var(--navy);
+      background: var(--sun);
       border-radius: 22px;
       font-size: 1.35rem;
       font-weight: 900;
-      background: var(--sun);
-      color: var(--navy);
     }
     .about-card h3 { margin-bottom: 8px; font-size: 1.6rem; }
-    .about-card p { color: rgba(255,255,255,.62); }
+    .about-card p { color: rgba(255,255,255,.65); }
+    .about-card p strong { color: #fff; }
     .about-card .location { margin-top: 28px; color: #b9d9cc; font-size: .9rem; }
-    .about-copy > p { color: var(--muted); font-size: 1.12rem; }
-    .about-copy .lead { color: var(--ink); font-size: clamp(1.45rem, 2.5vw, 2.05rem); line-height: 1.42; letter-spacing: -.025em; }
+    .about-copy > p { color: var(--muted); font-size: 1.1rem; }
+    .about-copy .lead { color: var(--ink); font-size: clamp(1.42rem, 2.5vw, 2rem); line-height: 1.42; letter-spacing: -.025em; }
     .pill-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 32px; }
-    .pill {
-      padding: 9px 13px;
-      border-radius: 999px;
-      color: #275944;
-      background: var(--green-soft);
-      font-size: .84rem;
-      font-weight: 750;
-    }
+    .pill { padding: 9px 13px; color: #275944; background: var(--green-soft); border-radius: 999px; font-size: .84rem; font-weight: 750; }
 
-    .expertise { background: #eaf0ec; }
+    .expertise { background: #fff; }
     .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
     .card {
-      min-height: 270px;
+      min-height: 250px;
       padding: 28px;
+      background: var(--surface);
       border: 1px solid rgba(16,35,42,.08);
       border-radius: 20px;
-      background: rgba(255,255,255,.76);
       transition: transform .22s ease, box-shadow .22s ease, background .22s ease;
     }
-    .card:hover { transform: translateY(-5px); box-shadow: 0 20px 50px rgba(8,27,36,.09); background: #fff; }
+    .card:hover { transform: translateY(-5px); background: #fff; box-shadow: 0 20px 50px rgba(8,27,36,.09); }
     .icon {
       width: 48px;
       aspect-ratio: 1;
       display: grid;
       place-items: center;
       margin-bottom: 28px;
-      border-radius: 14px;
       color: var(--navy);
       background: var(--sun);
+      border-radius: 14px;
       font-weight: 900;
     }
     .card h3 { margin-bottom: 10px; font-size: 1.2rem; }
     .card p { margin-bottom: 0; color: var(--muted); font-size: .94rem; }
 
     .track-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .track-panel {
-      padding: 38px;
-      border-radius: var(--radius);
-      background: var(--paper);
-      border: 1px solid var(--line);
-    }
-    .track-panel.dark { background: var(--navy); color: #fff; border-color: transparent; }
-    .track-panel h3 { font-size: 1.65rem; margin-bottom: 20px; }
+    .track-panel { padding: 38px; background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); }
+    .track-panel.dark { color: #fff; background: var(--navy); border-color: transparent; }
+    .track-panel h3 { margin-bottom: 20px; font-size: 1.65rem; }
     .track-panel p { color: var(--muted); }
     .track-panel.dark p { color: rgba(255,255,255,.65); }
     .check-list { list-style: none; padding: 0; margin: 28px 0 0; }
-    .check-list li {
-      display: grid;
-      grid-template-columns: 24px 1fr;
-      gap: 12px;
-      padding: 14px 0;
-      border-top: 1px solid var(--line);
-    }
+    .check-list li { display: grid; grid-template-columns: 24px 1fr; gap: 12px; padding: 14px 0; border-top: 1px solid var(--line); }
     .dark .check-list li { border-color: rgba(255,255,255,.12); }
     .check { color: var(--green); font-weight: 900; }
     .dark .check { color: var(--sun); }
 
-    .tools { background: var(--navy); color: #fff; }
+    .tools { color: #fff; background: var(--navy); }
     .tools .section-kicker { color: var(--sun); }
     .tools .section-head p { color: rgba(255,255,255,.62); }
     .tool-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
@@ -410,64 +423,73 @@
       grid-template-columns: auto 1fr;
       gap: 18px;
       padding: 26px;
+      background: rgba(255,255,255,.04);
       border: 1px solid rgba(255,255,255,.12);
       border-radius: 20px;
-      background: rgba(255,255,255,.04);
     }
     .tool-number {
       width: 42px;
       aspect-ratio: 1;
       display: grid;
       place-items: center;
-      border-radius: 12px;
       color: var(--navy);
       background: var(--sun);
+      border-radius: 12px;
       font-weight: 900;
     }
     .tool-card h3 { margin-bottom: 6px; font-size: 1.1rem; }
-    .tool-card p { margin-bottom: 0; color: rgba(255,255,255,.58); font-size: .9rem; }
+    .tool-card p { margin-bottom: 0; color: rgba(255,255,255,.60); font-size: .9rem; }
 
-    .cta {
-      padding: 90px 0;
-      background: var(--sun);
-    }
-    .cta-grid {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 36px;
-      align-items: center;
-    }
-    .cta h2 { margin-bottom: 12px; max-width: 780px; font-size: clamp(2.25rem, 5vw, 4.7rem); line-height: 1; letter-spacing: -.055em; }
+    .cta { padding: 90px 0; background: var(--sun); }
+    .cta-grid { display: grid; grid-template-columns: 1fr auto; gap: 36px; align-items: center; }
+    .cta h2 { max-width: 800px; margin-bottom: 12px; font-size: clamp(2.25rem, 5vw, 4.65rem); line-height: 1; letter-spacing: -.055em; }
     .cta p { margin-bottom: 0; color: rgba(8,27,36,.70); font-size: 1.05rem; }
-    .cta .button { background: var(--navy); color: #fff; }
+    .cta .button { color: #fff; background: var(--navy); }
 
-    footer { padding: 34px 0; background: #06151c; color: rgba(255,255,255,.55); }
+    footer { padding: 34px 0; color: rgba(255,255,255,.56); background: #06151c; }
     .footer-grid { display: flex; justify-content: space-between; align-items: center; gap: 20px; }
-    footer a { color: #fff; text-decoration: none; font-weight: 700; }
+    footer a { color: #fff; text-decoration: none; font-weight: 750; }
 
     .reveal { opacity: 0; transform: translateY(22px); transition: opacity .65s ease, transform .65s ease; }
     .reveal.visible { opacity: 1; transform: none; }
 
-    @media (max-width: 900px) {
-      .nav-links a:not(.nav-cta) { display: none; }
+    @media (max-width: 980px) {
       .hero-grid, .about-grid, .track-grid, .cta-grid { grid-template-columns: 1fr; }
       .hero { min-height: auto; }
-      .hero-grid { gap: 38px; }
       .solar-visual { min-height: 400px; }
       .stats-grid { grid-template-columns: repeat(2, 1fr); }
       .stat:nth-child(2) { border-right: 0; }
       .stat:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
-      .about-grid { gap: 42px; }
+      .service-grid { grid-template-columns: 1fr; }
+      .service-card { min-height: auto; }
       .about-card { position: relative; top: auto; }
       .cards { grid-template-columns: repeat(2, 1fr); }
       .cta-grid { justify-items: start; }
+    }
+
+    @media (max-width: 760px) {
+      .menu-button { display: block; }
+      .nav-links {
+        display: none;
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 68px;
+        padding: 18px 20px 24px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 4px;
+        background: rgba(8,27,36,.98);
+      }
+      .nav-links.open { display: flex; }
+      .nav-links a { padding: 11px 4px; }
+      .nav-links .nav-cta { margin-top: 8px; text-align: center; }
     }
 
     @media (max-width: 620px) {
       .wrap { width: min(var(--max), calc(100% - 28px)); }
       .nav { min-height: 68px; }
       .brand { font-size: .9rem; }
-      .nav-links .nav-cta { padding: 9px 13px; }
       .hero { padding: 116px 0 78px; }
       h1 { font-size: clamp(3rem, 18vw, 4.8rem); }
       .solar-visual { min-height: 330px; }
@@ -480,10 +502,9 @@
       section { padding: 78px 0; }
       .stats { margin-top: -34px; }
       .stat { padding: 22px 18px; }
-      .stat strong { font-size: 2.15rem; }
+      .stat strong { font-size: 2.1rem; }
       .cards, .tool-grid { grid-template-columns: 1fr; }
-      .card { min-height: auto; }
-      .track-panel { padding: 28px 24px; }
+      .track-panel, .service-card { padding: 28px 24px; }
       .cta { padding: 68px 0; }
       .footer-grid { align-items: flex-start; flex-direction: column; }
     }
@@ -496,34 +517,36 @@
   </style>
 </head>
 <body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
   <header class="site-header" id="siteHeader">
     <div class="wrap nav">
       <a class="brand" href="#top" aria-label="Solarist home"><span class="brand-mark" aria-hidden="true"></span>Solarist</a>
-      <nav class="nav-links" aria-label="Primary navigation">
-        <a href="#about">About</a>
+      <button class="menu-button" id="menuButton" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="navLinks">
+        <span></span><span></span><span></span>
+      </button>
+      <nav class="nav-links" id="navLinks" aria-label="Primary navigation">
+        <a href="#services">Services</a>
         <a href="#expertise">Expertise</a>
         <a href="#track-record">Track record</a>
-        <a href="#tools">Tools</a>
-        <a class="nav-cta" href="https://www.linkedin.com/in/huzaifarjkhan/" target="_blank" rel="noopener noreferrer">LinkedIn ↗</a>
+        <a href="#about">Founder</a>
+        <a class="nav-cta" href="https://www.linkedin.com/in/huzaifarjkhan/" target="_blank" rel="noopener noreferrer">Discuss a project ↗</a>
       </nav>
     </div>
   </header>
 
-  <main id="top">
-    <section class="hero">
+  <main id="main">
+    <section class="hero" id="top">
       <div class="wrap hero-grid">
         <div>
-          <div class="eyebrow">Solar engineering · automation · AI</div>
-          <h1>Engineering sunlight into <span>real systems.</span></h1>
-          <p class="hero-copy">I’m Huzaifa Khan, a solar design engineer and automation builder working across commercial PV, battery energy storage, permit-ready design, and practical engineering software.</p>
+          <div class="eyebrow">Solar engineering · automation · BIM</div>
+          <h1>Engineering expertise. <span>Practical automation.</span></h1>
+          <p class="hero-copy">Solarist is an engineering and automation practice founded by Huzaifa Khan — combining commercial PV and BESS design experience with practical AI and workflow automation for technical businesses.</p>
           <div class="hero-actions">
-            <a class="button button-primary" href="https://www.linkedin.com/in/huzaifarjkhan/" target="_blank" rel="noopener noreferrer">
-              Connect on LinkedIn
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M13.5 5.5 20 12l-6.5 6.5-1.4-1.4 4.1-4.1H4v-2h12.2l-4.1-4.1 1.4-1.4Z"/></svg>
-            </a>
-            <a class="button button-secondary" href="#track-record">View track record</a>
+            <a class="button button-primary" href="#services">Explore services →</a>
+            <a class="button button-secondary" href="https://www.linkedin.com/in/huzaifarjkhan/" target="_blank" rel="noopener noreferrer">Connect on LinkedIn ↗</a>
           </div>
-          <p class="hero-note">Based in India · U.S. solar market experience</p>
+          <p class="hero-note">Based in India · Supporting U.S. solar and global technical teams</p>
         </div>
 
         <div class="solar-visual" aria-hidden="true">
@@ -532,7 +555,7 @@
             <div class="panel panel-two"></div>
             <div class="sun-disc"></div>
             <div class="metric-chip chip-one"><strong>20+ AHJs</strong><span>California jurisdictions</span></div>
-            <div class="metric-chip chip-two"><strong>1.19 MW</strong><span>Largest single project</span></div>
+            <div class="metric-chip chip-two"><strong>7.1 MW</strong><span>PV capacity designed</span></div>
           </div>
         </div>
       </div>
@@ -543,32 +566,60 @@
         <div class="stat"><strong>8+</strong><span>Years of engineering experience</span></div>
         <div class="stat"><strong>65+</strong><span>Commercial solar projects delivered</span></div>
         <div class="stat"><strong>70+</strong><span>Permit-ready packages produced independently</span></div>
-        <div class="stat"><strong>18 kW–1.19 MW</strong><span>Project design range</span></div>
+        <div class="stat"><strong>1.19 MW</strong><span>Largest single project designed</span></div>
       </div>
     </div>
 
-    <section id="about">
-      <div class="wrap about-grid">
-        <aside class="about-card reveal">
-          <div class="monogram">HK</div>
-          <h3>Huzaifa Khan</h3>
-          <p>Solar Design Engineer<br>Civil Engineering Graduate<br>Engineering Automation Builder</p>
-          <div class="location">Navi Mumbai, India · Supporting U.S. projects</div>
-        </aside>
-        <div class="about-copy reveal">
-          <div class="section-kicker">About</div>
-          <p class="lead">I combine field-aware engineering judgment, permit documentation experience, and software thinking to make solar design work more reliable and efficient.</p>
-          <p>My experience spans commercial and residential solar PV, BESS, solar thermal, and PVT hybrid systems. I have supported projects across a wide range of California authorities having jurisdiction, including demanding DSA-level submittals and multiple utility territories.</p>
-          <p>Alongside design work, I build calculators, AI agents, and workflow automation tools for real engineering operations—not just demonstrations. The goal is always the same: fewer mistakes, faster decisions, and clearer deliverables.</p>
-          <div class="pill-row" aria-label="Professional focus areas">
-            <span class="pill">Commercial PV</span>
-            <span class="pill">Battery Energy Storage</span>
-            <span class="pill">NEC Compliance</span>
-            <span class="pill">Permit Plan Sets</span>
-            <span class="pill">AHJ Coordination</span>
-            <span class="pill">Engineering Automation</span>
-          </div>
+    <section class="services" id="services">
+      <div class="wrap">
+        <div class="section-head reveal">
+          <div class="section-kicker">What we offer</div>
+          <h2>Focused technical support that moves real work forward.</h2>
+          <p>Solarist provides three practical service lines for teams that need reliable engineering capacity, cleaner workflows, or production-ready BIM content.</p>
         </div>
+
+        <div class="service-grid">
+          <article class="service-card reveal">
+            <div class="service-number">01</div>
+            <h3>Engineering Design Support</h3>
+            <p>Permit-ready Solar PV and BESS design support for U.S. solar EPCs and engineering firms needing reliable remote design capacity.</p>
+            <ul class="service-list">
+              <li>PV and BESS layouts and design documentation</li>
+              <li>Single-line diagrams, schedules, notes, and calculations</li>
+              <li>Permit comment responses and drawing revisions</li>
+              <li>Architectural, structural, MEP, fire-code, and utility coordination</li>
+            </ul>
+            <div class="service-for">For solar EPCs & engineering teams</div>
+          </article>
+
+          <article class="service-card reveal">
+            <div class="service-number">02</div>
+            <h3>AI & Workflow Automation</h3>
+            <p>Custom automation systems, AI agents, and engineering tools that reduce manual bottlenecks in technical operations.</p>
+            <ul class="service-list">
+              <li>Engineering calculators and decision-support tools</li>
+              <li>AI agents for repeatable technical workflows</li>
+              <li>Internal dashboards and Firebase-based applications</li>
+              <li>Process mapping, automation design, and implementation</li>
+            </ul>
+            <div class="service-for">For technical businesses & operations teams</div>
+          </article>
+
+          <article class="service-card reveal">
+            <div class="service-number">03</div>
+            <h3>Autodesk Revit & BIM Content</h3>
+            <p>Creation of efficient, usable Revit families and conversion of SolidWorks product models into BIM-ready Revit family content.</p>
+            <ul class="service-list">
+              <li>Parametric Revit family creation</li>
+              <li>SolidWorks-to-Revit family conversion</li>
+              <li>Geometry simplification and BIM optimisation</li>
+              <li>Manufacturer-ready product families and technical metadata</li>
+            </ul>
+            <div class="service-for">For manufacturers, consultants & BIM teams</div>
+          </article>
+        </div>
+
+        <p class="service-note">Engineering design support is provided within the agreed project scope. Licensed review, professional stamping, and final code responsibility remain with the project’s Engineer of Record where required.</p>
       </div>
     </section>
 
@@ -576,16 +627,16 @@
       <div class="wrap">
         <div class="section-head reveal">
           <div class="section-kicker">Core expertise</div>
-          <h2>From system concept to permit-ready documentation.</h2>
-          <p>Practical design experience across electrical, architectural, structural, fire-code, and utility coordination requirements.</p>
+          <h2>Technical depth behind every service.</h2>
+          <p>Experience spanning energy design, permit documentation, BIM content, multidisciplinary coordination, and software-enabled engineering workflows.</p>
         </div>
         <div class="cards">
-          <article class="card reveal"><div class="icon">01</div><h3>Solar PV & BESS Design</h3><p>System layouts and documentation for rooftop, commercial, residential, and storage-integrated projects in the U.S. market.</p></article>
-          <article class="card reveal"><div class="icon">02</div><h3>Permit Plan Sets</h3><p>NEC-conscious plan development, single-line diagrams, equipment schedules, calculations, notes, and coordinated drawing packages.</p></article>
-          <article class="card reveal"><div class="icon">03</div><h3>AHJ & Utility Coordination</h3><p>Experience across 20+ California jurisdictions, varied utility territories, municipal reviews, and DSA submittals.</p></article>
-          <article class="card reveal"><div class="icon">04</div><h3>Multidisciplinary Coordination</h3><p>Coordination with architectural, structural, mechanical, electrical, fire-life-safety, and construction requirements.</p></article>
-          <article class="card reveal"><div class="icon">05</div><h3>Solar Thermal & PVT</h3><p>Design exposure extending beyond conventional PV to solar thermal and hybrid photovoltaic-thermal systems.</p></article>
-          <article class="card reveal"><div class="icon">06</div><h3>Automation & AI</h3><p>Engineering calculators, workflow systems, AI agents, voice AI, and Firebase-based applications built around real operational needs.</p></article>
+          <article class="card reveal"><div class="icon">01</div><h3>Solar Energy Systems</h3><p>Commercial and residential PV, integrated BESS, solar thermal, and photovoltaic-thermal hybrid systems.</p></article>
+          <article class="card reveal"><div class="icon">02</div><h3>Permit Documentation</h3><p>NEC-conscious plan sets, single-line diagrams, equipment schedules, calculations, details, notes, and coordinated revisions.</p></article>
+          <article class="card reveal"><div class="icon">03</div><h3>AHJ & Utility Coordination</h3><p>Experience across 20+ California jurisdictions, multiple utility territories, municipal reviews, and DSA submittals.</p></article>
+          <article class="card reveal"><div class="icon">04</div><h3>Multidisciplinary Design</h3><p>Coordination across architectural, structural, civil, mechanical, electrical, fire-life-safety, and construction requirements.</p></article>
+          <article class="card reveal"><div class="icon">05</div><h3>Revit Family Development</h3><p>Creation, conversion, optimisation, and parameter structuring of Revit families for practical BIM use.</p></article>
+          <article class="card reveal"><div class="icon">06</div><h3>Automation & AI</h3><p>Engineering calculators, workflow systems, AI agents, voice AI, and Firebase applications built around operational needs.</p></article>
         </div>
       </div>
     </section>
@@ -595,29 +646,56 @@
         <div class="section-head reveal">
           <div class="section-kicker">Built on real experience</div>
           <h2>Credibility grounded in delivered work.</h2>
-          <p>A track record shaped by technically varied projects, rigorous reviews, and production engineering environments.</p>
+          <p>Solarist’s services are built on hands-on engineering, rigorous review cycles, multidisciplinary project coordination, and tools used in production—not proof-of-concept demonstrations.</p>
         </div>
         <div class="track-grid">
           <article class="track-panel reveal">
             <h3>Engineering track record</h3>
-            <p>Project experience spanning affordable housing, government infrastructure, retail, educational facilities, and other commercial applications.</p>
+            <p>Experience spans affordable housing, government infrastructure, retail, education, offices, food processing, and other technically varied applications.</p>
             <ul class="check-list">
-              <li><span class="check">✓</span><span>65+ delivered commercial solar projects</span></li>
-              <li><span class="check">✓</span><span>Systems ranging from 18 kW rooftops to 1.19 MW installations</span></li>
-              <li><span class="check">✓</span><span>20+ California AHJ jurisdictions and multiple utility territories</span></li>
-              <li><span class="check">✓</span><span>70+ permit-ready design packages independently produced in a previous role</span></li>
+              <li><span class="check">✓</span><span>7.1 MW of PV capacity and 10,875 modules specified across documented work</span></li>
+              <li><span class="check">✓</span><span>Projects ranging from 18 kW rooftops to a 1.19 MW installation</span></li>
+              <li><span class="check">✓</span><span>20+ California AHJ jurisdictions, multiple utilities, and DSA state-level review</span></li>
+              <li><span class="check">✓</span><span>Commercial BESS experience including approximately 800 kWh of documented capacity</span></li>
             </ul>
           </article>
+
           <article class="track-panel dark reveal">
-            <h3>How I work</h3>
-            <p>Good engineering is not only a correct calculation. It is a coordinated, reviewable, buildable package that makes decisions clear to every stakeholder.</p>
+            <h3>How we work</h3>
+            <p>Good technical work is more than a correct calculation. It must be coordinated, reviewable, maintainable, and clear to every stakeholder who uses it.</p>
             <ul class="check-list">
-              <li><span class="check">✓</span><span>Code-conscious and detail-oriented</span></li>
-              <li><span class="check">✓</span><span>Comfortable with complex review comments and design revisions</span></li>
-              <li><span class="check">✓</span><span>Focused on constructability and interdisciplinary conflicts</span></li>
-              <li><span class="check">✓</span><span>Automation-minded approach to repetitive engineering work</span></li>
+              <li><span class="check">✓</span><span>Code-conscious, detail-oriented documentation</span></li>
+              <li><span class="check">✓</span><span>Comfort with complex comments, revisions, and coordination constraints</span></li>
+              <li><span class="check">✓</span><span>Constructability and usability considered from the start</span></li>
+              <li><span class="check">✓</span><span>Automation applied where it improves speed, consistency, and quality</span></li>
             </ul>
           </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="about">
+      <div class="wrap about-grid">
+        <aside class="about-card reveal">
+          <div class="monogram">HK</div>
+          <h3>Huzaifa Khan</h3>
+          <p><strong>Founder, Solarist</strong><br>Solar Design Engineer &amp;<br>Engineering Automation Builder</p>
+          <div class="location">Navi Mumbai, India · U.S. solar market experience</div>
+        </aside>
+
+        <div class="about-copy reveal">
+          <div class="section-kicker">Founder</div>
+          <p class="lead">I combine field-aware engineering judgment, permit documentation experience, and software thinking to make technical work more reliable and efficient.</p>
+          <p>I hold a Bachelor of Engineering in Civil Engineering from the University of Mumbai. That construction and structural foundation supports my work in roof-mounted PV, equipment coordination, racking assessment, plant-room integration, and multidisciplinary design.</p>
+          <p>My renewable-energy experience spans commercial and residential solar PV, BESS, solar thermal, PVT hybrid systems, and demanding permit environments. Alongside design work, I build calculators, AI agents, Revit content, and workflow automation tools for real technical operations.</p>
+          <div class="pill-row" aria-label="Professional focus areas">
+            <span class="pill">Commercial PV</span>
+            <span class="pill">Battery Energy Storage</span>
+            <span class="pill">NEC Permit Design</span>
+            <span class="pill">Autodesk Revit</span>
+            <span class="pill">BIM Families</span>
+            <span class="pill">Engineering Automation</span>
+          </div>
         </div>
       </div>
     </section>
@@ -625,12 +703,12 @@
     <section class="tools" id="tools">
       <div class="wrap">
         <div class="section-head reveal">
-          <div class="section-kicker">Engineering tools & software</div>
-          <h2>Software built to solve technical work.</h2>
+          <div class="section-kicker">Engineering tools & systems</div>
+          <h2>Built to solve technical work.</h2>
           <p>Independent tools and systems designed around accuracy, speed, repeatability, and usability in production environments.</p>
         </div>
         <div class="tool-grid">
-          <article class="tool-card reveal"><div class="tool-number">01</div><div><h3>Voltage Drop Calculator</h3><p>An NEC-conscious electrical calculator built and deployed for active use in a U.S.-based commercial solar engineering environment.</p></div></article>
+          <article class="tool-card reveal"><div class="tool-number">01</div><div><h3>Voltage Drop Calculator</h3><p>An NEC-conscious calculator built and deployed for active use in a U.S.-based commercial solar engineering environment.</p></div></article>
           <article class="tool-card reveal"><div class="tool-number">02</div><div><h3>SCCR Fault Current Calculator</h3><p>A focused tool for short-circuit current rating and fault-current evaluation workflows.</p></div></article>
           <article class="tool-card reveal"><div class="tool-number">03</div><div><h3>Master Electrical Calculator</h3><p>Combined workflows for string sizing, conductor ampacity, conduit fill, and overcurrent protection calculations.</p></div></article>
           <article class="tool-card reveal"><div class="tool-number">04</div><div><h3>AI & Workflow Systems</h3><p>AI agents, voice AI systems, workflow automation, and Firebase web applications designed for real operational problems.</p></div></article>
@@ -641,26 +719,46 @@
     <section class="cta" id="contact">
       <div class="wrap cta-grid reveal">
         <div>
-          <h2>Let’s connect around solar engineering and smarter workflows.</h2>
-          <p>Professional connections, technical conversations, and engineering collaboration are welcome.</p>
+          <h2>Need engineering capacity, automation, or Revit content?</h2>
+          <p>Start a conversation about your project, workflow, or product-family requirements.</p>
         </div>
-        <a class="button" href="https://www.linkedin.com/in/huzaifarjkhan/" target="_blank" rel="noopener noreferrer">View LinkedIn profile ↗</a>
+        <a class="button" href="https://www.linkedin.com/in/huzaifarjkhan/" target="_blank" rel="noopener noreferrer">Discuss a project on LinkedIn ↗</a>
       </div>
     </section>
   </main>
 
   <footer>
     <div class="wrap footer-grid">
-      <span>© <span id="year"></span> Solarist. A professional portfolio by Huzaifa Khan.</span>
+      <span>© <span id="year"></span> Solarist. An engineering and automation practice founded by Huzaifa Khan.</span>
       <a href="https://www.linkedin.com/in/huzaifarjkhan/" target="_blank" rel="noopener noreferrer">LinkedIn ↗</a>
     </div>
   </footer>
 
   <script>
     const header = document.getElementById('siteHeader');
+    const menuButton = document.getElementById('menuButton');
+    const navLinks = document.getElementById('navLinks');
+
     const setHeader = () => header.classList.toggle('scrolled', window.scrollY > 18);
     setHeader();
     window.addEventListener('scroll', setHeader, { passive: true });
+
+    menuButton.addEventListener('click', () => {
+      const open = navLinks.classList.toggle('open');
+      header.classList.toggle('menu-open', open);
+      menuButton.setAttribute('aria-expanded', String(open));
+      menuButton.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
+    });
+
+    navLinks.querySelectorAll('a').forEach((link) => {
+      link.addEventListener('click', () => {
+        navLinks.classList.remove('open');
+        header.classList.remove('menu-open');
+        menuButton.setAttribute('aria-expanded', 'false');
+        menuButton.setAttribute('aria-label', 'Open navigation');
+      });
+    });
+
     document.getElementById('year').textContent = new Date().getFullYear();
 
     const reveal = new IntersectionObserver((entries) => {
@@ -677,12 +775,27 @@
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "Person",
-    "name": "Huzaifa Khan",
+    "@type": "ProfessionalService",
+    "name": "Solarist",
     "url": "https://solarist.in/",
-    "sameAs": ["https://www.linkedin.com/in/huzaifarjkhan/"],
-    "jobTitle": "Solar Design Engineer",
-    "knowsAbout": ["Solar PV Design", "Battery Energy Storage Systems", "NEC Permit Design", "Engineering Automation", "Artificial Intelligence"]
+    "description": "An engineering and automation practice providing solar PV and BESS design support, AI workflow automation, and Autodesk Revit family services.",
+    "founder": {
+      "@type": "Person",
+      "name": "Huzaifa Khan",
+      "jobTitle": "Founder and Solar Design Engineer",
+      "sameAs": ["https://www.linkedin.com/in/huzaifarjkhan/"]
+    },
+    "areaServed": ["United States", "India", "Worldwide"],
+    "knowsAbout": [
+      "Solar PV Design",
+      "Battery Energy Storage Systems",
+      "NEC Permit Documentation",
+      "Engineering Automation",
+      "Artificial Intelligence",
+      "Autodesk Revit",
+      "BIM Family Creation",
+      "SolidWorks to Revit Conversion"
+    ]
   }
   </script>
 </body>
