@@ -1,0 +1,103 @@
+/* Solarist Brand Strategy & Digital System - Volume 02
+   Starter implementation tokens. Validate in Figma and production before release. */
+:root {
+  /* Core palette */
+  --sol-color-ink: #11100f;
+  --sol-color-ink-700: #3c3834;
+  --sol-color-ink-500: #6b635d;
+  --sol-color-paper: #ebe3d6;
+  --sol-color-canvas: #f7f4ef;
+  --sol-color-white: #ffffff;
+  --sol-color-line: #d5ccc0;
+  --sol-color-sun-display: #d85a1a;
+  --sol-color-sun-text: #a8400d;
+  --sol-color-ember: #ed7a3f;
+  --sol-color-success: #2f6b4f;
+  --sol-color-warning: #8a5a00;
+  --sol-color-error: #b42318;
+  --sol-color-info: #1f5f8b;
+
+  /* Semantic colour roles */
+  --sol-text-primary: var(--sol-color-ink);
+  --sol-text-secondary: var(--sol-color-ink-700);
+  --sol-text-muted: var(--sol-color-ink-500);
+  --sol-text-accent: var(--sol-color-sun-text);
+  --sol-surface-page: var(--sol-color-canvas);
+  --sol-surface-warm: var(--sol-color-paper);
+  --sol-surface-raised: var(--sol-color-white);
+  --sol-action-primary: var(--sol-color-ink);
+  --sol-action-accent: var(--sol-color-sun-text);
+  --sol-border-subtle: var(--sol-color-line);
+  --sol-focus-ring: var(--sol-color-sun-text);
+
+  /* Typography */
+  --sol-font-display: "Canela Deck", Georgia, "Times New Roman", serif;
+  --sol-font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --sol-font-data: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+
+  --sol-type-d1: clamp(3.5rem, 7vw, 6rem);
+  --sol-type-d2: clamp(2.75rem, 5vw, 4.5rem);
+  --sol-type-h1: clamp(2.25rem, 4vw, 3rem);
+  --sol-type-h2: clamp(1.75rem, 3vw, 2rem);
+  --sol-type-h3: clamp(1.375rem, 2vw, 1.5rem);
+  --sol-type-lead: clamp(1.125rem, 1.5vw, 1.25rem);
+  --sol-type-body: 1rem;
+  --sol-type-small: 0.875rem;
+  --sol-type-caption: 0.6875rem;
+
+  --sol-leading-display: 0.98;
+  --sol-leading-heading: 1.15;
+  --sol-leading-body: 1.6;
+  --sol-leading-small: 1.55;
+  --sol-leading-caption: 1.4;
+
+  /* Spacing: 4 px base */
+  --sol-space-1: 0.25rem;
+  --sol-space-2: 0.5rem;
+  --sol-space-3: 0.75rem;
+  --sol-space-4: 1rem;
+  --sol-space-6: 1.5rem;
+  --sol-space-8: 2rem;
+  --sol-space-12: 3rem;
+  --sol-space-16: 4rem;
+  --sol-space-24: 6rem;
+  --sol-space-32: 8rem;
+
+  /* Shape and elevation */
+  --sol-radius-sm: 0.5rem;
+  --sol-radius-md: 0.75rem;
+  --sol-radius-lg: 1.25rem;
+  --sol-shadow-raised: 0 12px 30px rgb(17 16 15 / 0.08);
+
+  /* Layout */
+  --sol-content-max: 80rem;
+  --sol-grid-columns: 12;
+  --sol-grid-gutter: clamp(1rem, 2vw, 2rem);
+  --sol-touch-target: 2.75rem;
+
+  /* Motion */
+  --sol-duration-fast: 120ms;
+  --sol-duration-base: 200ms;
+  --sol-duration-slow: 320ms;
+  --sol-ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* Breakpoints for documentation; CSS custom properties cannot drive media queries */
+  --sol-breakpoint-sm: 30rem;
+  --sol-breakpoint-md: 48rem;
+  --sol-breakpoint-lg: 64rem;
+  --sol-breakpoint-xl: 80rem;
+}
+
+:focus-visible {
+  outline: 3px solid var(--sol-focus-ring);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
