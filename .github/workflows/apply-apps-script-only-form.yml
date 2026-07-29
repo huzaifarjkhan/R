@@ -1,0 +1,175 @@
+name: Apply Apps Script-only Solarist form
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.event.issue.title == 'Apply Apps Script-only Solarist form'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Remove FormSubmit and use Apps Script only
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          endpoint = 'https://script.google.com/macros/s/AKfycbz2QghMUkVE-aLRTAjIxoGC-xHk0ArBqOP9a52XqDblG6EVhKaMXDXP1Sf1y2fpfgR3/exec'
+
+          old_open = '<form id="solaristEnquiryForm" action="https://formsubmit.co/huzaifarjkhan@gmail.com" method="POST" target="formsubmitSink">'
+          new_open = f'<form id="solaristEnquiryForm" action="{endpoint}" method="POST" target="solaristSheetSink">'
+          if old_open not in s:
+              raise SystemExit('Expected FormSubmit form action was not found')
+          s = s.replace(old_open, new_open, 1)
+
+          for name in ('_subject', '_captcha', '_template', '_autoresponse'):
+              s = re.sub(rf'<input type="hidden" name="{re.escape(name)}"[^>]*>', '', s, count=1)
+
+          s = s.replace('solarist-parallel-form-style', 'solarist-apps-script-form-style')
+          s = s.replace('SOLARIST_PARALLEL_FORM_V1', 'SOLARIST_APPS_SCRIPT_FORM_V1')
+          s = s.replace('.formsubmit-sink', '.submission-sink')
+          s = s.replace('<iframe class="formsubmit-sink" name="formsubmitSink" title="Background form delivery" aria-hidden="true"></iframe>', '<iframe class="submission-sink" name="solaristSheetSink" id="solaristSheetSink" title="Secure enquiry delivery" aria-hidden="true"></iframe>')
+
+          js = r'''<script id="solarist-apps-script-form-script">
+          (() => {
+            const RESPONSE_SOURCE = 'solarist-enquiry-v1';
+            const form = document.getElementById('solaristEnquiryForm');
+            const sink = document.getElementById('solaristSheetSink');
+            const modal = document.getElementById('enquiryConfirmation');
+            const modalCard = modal?.querySelector('.enquiry-confirmation-card');
+            const closeButton = document.getElementById('enquiryConfirmationClose');
+            if (!form || !sink || !modal || !closeButton) return;
+
+            let pending = false;
+            let timeoutId = 0;
+            let lastFocused = null;
+            let submitButton = null;
+            let originalLabel = '';
+
+            let state = form.querySelector('.form-submit-state');
+            if (!state) {
+              state = document.createElement('p');
+              state.className = 'form-submit-state';
+              state.setAttribute('role', 'status');
+              state.setAttribute('aria-live', 'polite');
+              form.appendChild(state);
+            }
+
+            const restoreButton = () => {
+              if (!submitButton) return;
+              submitButton.disabled = false;
+              submitButton.textContent = originalLabel || 'Send enquiry';
+            };
+
+            const openConfirmation = () => {
+              lastFocused = document.activeElement;
+              modal.classList.add('is-open');
+              modal.setAttribute('aria-hidden', 'false');
+              document.body.style.overflow = 'hidden';
+              window.setTimeout(() => modalCard?.focus(), 60);
+            };
+
+            const closeConfirmation = () => {
+              modal.classList.remove('is-open');
+              modal.setAttribute('aria-hidden', 'true');
+              document.body.style.overflow = '';
+              lastFocused?.focus?.();
+            };
+
+            const failSubmission = message => {
+              pending = false;
+              window.clearTimeout(timeoutId);
+              restoreButton();
+              state.textContent = message || 'We could not confirm delivery. Please try again.';
+            };
+
+            closeButton.addEventListener('click', closeConfirmation);
+            modal.addEventListener('click', event => {
+              if (event.target === modal) closeConfirmation();
+            });
+            document.addEventListener('keydown', event => {
+              if (event.key === 'Escape' && modal.classList.contains('is-open')) closeConfirmation();
+            });
+
+            window.addEventListener('message', event => {
+              if (!pending || event.source !== sink.contentWindow) return;
+              const data = event.data;
+              if (!data || data.source !== RESPONSE_SOURCE) return;
+
+              if (!data.ok) {
+                failSubmission(data.message);
+                return;
+              }
+
+              pending = false;
+              window.clearTimeout(timeoutId);
+              form.reset();
+              state.textContent = '';
+              restoreButton();
+              openConfirmation();
+            });
+
+            form.addEventListener('submit', event => {
+              event.preventDefault();
+              if (pending) return;
+              if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+              }
+
+              const honeypot = form.querySelector('[name="_honey"]');
+              if (honeypot?.value) return;
+
+              const sourceField = document.getElementById('formSourceUrl');
+              if (sourceField) sourceField.value = window.location.href;
+
+              submitButton = form.querySelector('button[type="submit"],input[type="submit"]');
+              originalLabel = submitButton?.textContent || '';
+              if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.textContent = 'Sending…';
+              }
+
+              pending = true;
+              state.textContent = 'Submitting your enquiry…';
+              timeoutId = window.setTimeout(() => {
+                if (pending) failSubmission('The submission took too long to confirm. Please try again.');
+              }, 20000);
+
+              try {
+                HTMLFormElement.prototype.submit.call(form);
+              } catch (error) {
+                console.error('Solarist enquiry submission failed:', error);
+                failSubmission('We could not submit the enquiry. Please try again.');
+              }
+            });
+          })();
+          </script>'''
+
+          s, count = re.subn(r'<script id="solarist-parallel-form-script">.*?</script>', js, s, count=1, flags=re.S)
+          if count != 1:
+              raise SystemExit('Existing parallel form script was not found')
+
+          if 'formsubmit.co' in s or 'FormSubmit' in s:
+              raise SystemExit('FormSubmit reference remains after migration')
+
+          p.write_text(s, encoding='utf-8')
+          PY
+
+          rm -f .github/workflows/apply-apps-script-only-form.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html .github/workflows/apply-apps-script-only-form.yml
+          git commit -m 'Replace FormSubmit with Google Apps Script mail and logging'
+          git push
