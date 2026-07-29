@@ -4,6 +4,7 @@ const SOLARIST_CONFIG = Object.freeze({
   OWNER_EMAIL: 'huzaifarjkhan@gmail.com',
   TEST_EMAIL: 'huzaifarjkhan@gmail.com',
   RESPONSE_SOURCE: 'solarist-enquiry-v1',
+  RESPONSE_BRIDGE: 'https://solarist.in/enquiry-response.html',
 });
 
 function authorizeSolaristEnquiries() {
@@ -62,9 +63,15 @@ function doPost(e) {
 }
 
 function processEnquiry_(input) {
-  const submittedAt = new Date().toISOString();
+  const submittedDate = new Date();
+  const submittedAt = submittedDate.toISOString();
+  const submittedDisplay = Utilities.formatDate(
+    submittedDate,
+    Session.getScriptTimeZone() || 'Asia/Kolkata',
+    'dd MMM yyyy, hh:mm a z'
+  );
   const rowNumber = appendEnquiryRow_(input, submittedAt);
-  const mail = sendEnquiryEmails_(input, submittedAt);
+  const mail = sendEnquiryEmails_(input, submittedAt, submittedDisplay);
 
   return {
     source: SOLARIST_CONFIG.RESPONSE_SOURCE,
@@ -119,24 +126,25 @@ function normaliseInput_(p) {
 }
 
 function validateInput_(input) {
-  if (input.name.length < 2) throw new Error('A valid name is required.');
+  if (input.name.length < 2) throw new Error('Please enter a valid name.');
 
   const emailPattern = /^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/;
   if (!emailPattern.test(input.email) || input.email.includes('..')) {
-    throw new Error('A valid email is required.');
+    throw new Error('Please enter a valid email address.');
   }
 
-  if (input.requirements.length < 10) {
-    throw new Error('Requirements must contain at least 10 characters.');
+  if (input.requirements.length < 3) {
+    throw new Error('Please add a short description of the requirement.');
   }
 }
 
-function sendEnquiryEmails_(input, submittedAt) {
+function sendEnquiryEmails_(input, submittedAt, submittedDisplay) {
   let ownerEmailSent = false;
   let visitorEmailSent = false;
 
   const details = [
-    `Submitted: ${submittedAt}`,
+    `Submitted: ${submittedDisplay}`,
+    `Submission ID: ${submittedAt}`,
     `Name: ${input.name}`,
     `Company: ${input.company || 'Not provided'}`,
     `Email: ${input.email}`,
@@ -155,7 +163,7 @@ function sendEnquiryEmails_(input, submittedAt) {
       replyTo: input.email,
       subject: `New Solarist enquiry — ${input.service || 'Project enquiry'}`,
       body: `A new Solarist website enquiry has been received.\n\n${details}`,
-      htmlBody: ownerHtml_(input, submittedAt),
+      htmlBody: ownerHtml_(input, submittedDisplay),
       name: 'Solarist Website',
     });
     ownerEmailSent = true;
@@ -168,8 +176,8 @@ function sendEnquiryEmails_(input, submittedAt) {
       to: input.email,
       replyTo: SOLARIST_CONFIG.OWNER_EMAIL,
       subject: 'We received your Solarist enquiry',
-      body: `Hello ${input.name},\n\nThank you for contacting Solarist. Your enquiry has been received. We will review the details and respond within one to two business days.\n\nService: ${input.service || 'Project enquiry'}\nSubmitted: ${submittedAt}\n\nRegards,\nSolarist\nEngineering expertise. Practical automation.`,
-      htmlBody: visitorHtml_(input, submittedAt),
+      body: `Hello ${input.name},\n\nThank you for contacting Solarist. Your enquiry has been received. We will review the details and respond within one to two business days.\n\nService: ${input.service || 'Project enquiry'}\nSubmitted: ${submittedDisplay}\n\nRegards,\nSolarist\nEngineering expertise. Practical automation.`,
+      htmlBody: visitorHtml_(input, submittedDisplay),
       name: 'Solarist',
     });
     visitorEmailSent = true;
@@ -180,12 +188,12 @@ function sendEnquiryEmails_(input, submittedAt) {
   return { ownerEmailSent, visitorEmailSent };
 }
 
-function ownerHtml_(input, submittedAt) {
-  return `<div style="font-family:Arial,sans-serif;line-height:1.55;color:#161310;max-width:680px"><h2>New Solarist website enquiry</h2><table style="border-collapse:collapse;width:100%">${emailRow_('Submitted', submittedAt)}${emailRow_('Name', input.name)}${emailRow_('Company', input.company || 'Not provided')}${emailRow_('Email', input.email)}${emailRow_('Service', input.service || 'Not specified')}${emailRow_('Project market', input.projectMarket || 'Not specified')}${emailRow_('Source', input.sourceUrl || 'Not provided')}</table><h3>Requirements</h3><div style="white-space:pre-wrap;background:#f5f1e8;padding:16px;border-left:3px solid #d85a1a">${escapeHtml_(input.requirements)}</div></div>`;
+function ownerHtml_(input, submittedDisplay) {
+  return `<div style="font-family:Arial,sans-serif;line-height:1.55;color:#161310;max-width:680px"><h2>New Solarist website enquiry</h2><table style="border-collapse:collapse;width:100%">${emailRow_('Submitted', submittedDisplay)}${emailRow_('Name', input.name)}${emailRow_('Company', input.company || 'Not provided')}${emailRow_('Email', input.email)}${emailRow_('Service', input.service || 'Not specified')}${emailRow_('Project market', input.projectMarket || 'Not specified')}${emailRow_('Source', input.sourceUrl || 'Not provided')}</table><h3>Requirements</h3><div style="white-space:pre-wrap;background:#f5f1e8;padding:16px;border-left:3px solid #d85a1a">${escapeHtml_(input.requirements)}</div></div>`;
 }
 
-function visitorHtml_(input, submittedAt) {
-  return `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#161310;max-width:620px"><p>Hello ${escapeHtml_(input.name)},</p><h2>Your Solarist enquiry has been received.</h2><p>Thank you for reaching out. We will review the details and respond within one to two business days.</p><div style="background:#f5f1e8;padding:16px;margin:22px 0"><strong>Service</strong><br>${escapeHtml_(input.service || 'Project enquiry')}<br><br><strong>Submitted</strong><br>${escapeHtml_(submittedAt)}</div><p>Regards,<br><strong>Solarist</strong><br>Engineering expertise. Practical automation.</p></div>`;
+function visitorHtml_(input, submittedDisplay) {
+  return `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#161310;max-width:620px"><p>Hello ${escapeHtml_(input.name)},</p><h2>Your Solarist enquiry has been received.</h2><p>Thank you for reaching out. We will review the details and respond within one to two business days.</p><div style="background:#f5f1e8;padding:16px;margin:22px 0"><strong>Service</strong><br>${escapeHtml_(input.service || 'Project enquiry')}<br><br><strong>Submitted</strong><br>${escapeHtml_(submittedDisplay)}</div><p>Regards,<br><strong>Solarist</strong><br>Engineering expertise. Practical automation.</p></div>`;
 }
 
 function emailRow_(label, value) {
@@ -211,8 +219,9 @@ function escapeHtml_(value) {
 }
 
 function frameResponse_(payload) {
-  const safePayload = JSON.stringify(payload).replace(/</g, '\\u003c');
-  const html = `<!doctype html><meta charset="utf-8"><script>window.parent.postMessage(${safePayload}, '*');<\/script>`;
+  const encodedPayload = encodeURIComponent(JSON.stringify(payload));
+  const bridgeUrl = `${SOLARIST_CONFIG.RESPONSE_BRIDGE}#${encodedPayload}`;
+  const html = `<!doctype html><meta charset="utf-8"><script>window.location.replace(${JSON.stringify(bridgeUrl)});<\/script>`;
   return HtmlService.createHtmlOutput(html)
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
