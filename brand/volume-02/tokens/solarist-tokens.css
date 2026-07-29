@@ -93,6 +93,27 @@
   outline-offset: 3px;
 }
 
+/* Founder portrait is loaded from the repository root. !important is intentional:
+   the production page currently defines the portrait background later in an inline block. */
+.portrait {
+  background-image:
+    linear-gradient(to top, rgb(17 16 15 / 0.12), transparent 42%),
+    url("../../../1739488938549.jpg") !important;
+  background-size: cover !important;
+  background-position: center 18% !important;
+  background-repeat: no-repeat !important;
+}
+
+.portrait-mark {
+  opacity: 0 !important;
+}
+
+@media (max-width: 48rem) {
+  .portrait {
+    background-position: center 14% !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     scroll-behavior: auto !important;
