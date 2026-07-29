@@ -1,25 +1,29 @@
 const SOLARIST_CONFIG = Object.freeze({
   SPREADSHEET_ID: '171C7idoa4j-VCMol6JI13D0HYExfY62C1L0uDvtqdSo',
+  SHEET_NAME: 'Enquiries',
   OWNER_EMAIL: 'huzaifarjkhan@gmail.com',
   RESPONSE_SOURCE: 'solarist-enquiry-v1',
 });
 
 function authorizeSolaristEnquiries() {
   const spreadsheet = SpreadsheetApp.openById(SOLARIST_CONFIG.SPREADSHEET_ID);
-  Logger.log(`Connected to: ${spreadsheet.getName()}`);
+  const sheet = spreadsheet.getSheetByName(SOLARIST_CONFIG.SHEET_NAME);
+  if (!sheet) throw new Error(`Sheet tab not found: ${SOLARIST_CONFIG.SHEET_NAME}`);
+  Logger.log(`Connected to: ${spreadsheet.getName()} / ${sheet.getName()}`);
   Logger.log(`Remaining recipient quota: ${MailApp.getRemainingDailyQuota()}`);
 }
 
 function doGet() {
-  return frameResponse_({ source: SOLARIST_CONFIG.RESPONSE_SOURCE, ok: true, health: true });
+  return frameResponse_({
+    source: SOLARIST_CONFIG.RESPONSE_SOURCE,
+    ok: true,
+    health: true,
+  });
 }
 
 function doPost(e) {
   try {
     const input = normaliseInput_(e && e.parameter ? e.parameter : {});
-    if (input.honeypot) {
-      return frameResponse_({ source: SOLARIST_CONFIG.RESPONSE_SOURCE, ok: true, ignored: true });
-    }
     validateInput_(input);
 
     const submittedAt = new Date().toISOString();
@@ -40,8 +44,11 @@ function doPost(e) {
     lock.waitLock(10000);
     try {
       const spreadsheet = SpreadsheetApp.openById(SOLARIST_CONFIG.SPREADSHEET_ID);
-      spreadsheet.getSheets()[0].appendRow(row);
+      const sheet = spreadsheet.getSheetByName(SOLARIST_CONFIG.SHEET_NAME);
+      if (!sheet) throw new Error(`Sheet tab not found: ${SOLARIST_CONFIG.SHEET_NAME}`);
+      sheet.appendRow(row);
       SpreadsheetApp.flush();
+      console.log(`Solarist enquiry logged in row ${sheet.getLastRow()}`);
     } finally {
       lock.releaseLock();
     }
@@ -59,6 +66,7 @@ function doPost(e) {
     return frameResponse_({
       source: SOLARIST_CONFIG.RESPONSE_SOURCE,
       ok: false,
+      logged: false,
       message: 'We could not process the enquiry right now. Please try again.',
     });
   }
@@ -73,14 +81,17 @@ function normaliseInput_(p) {
     projectMarket: cleanText_(p.project_market || p.projectMarket, 120),
     requirements: cleanText_(p.message || p.requirements, 5000),
     sourceUrl: cleanText_(p.source_url || p.sourceUrl, 500),
-    honeypot: cleanText_(p._honey || p.website, 200),
   };
 }
 
 function validateInput_(input) {
   if (input.name.length < 2) throw new Error('A valid name is required.');
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(input.email)) throw new Error('A valid email is required.');
-  if (input.requirements.length < 10) throw new Error('Requirements must contain at least 10 characters.');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(input.email)) {
+    throw new Error('A valid email is required.');
+  }
+  if (input.requirements.length < 10) {
+    throw new Error('Requirements must contain at least 10 characters.');
+  }
 }
 
 function sendEnquiryEmails_(input, submittedAt) {
@@ -154,11 +165,17 @@ function safeSheetCell_(value) {
 }
 
 function escapeHtml_(value) {
-  return String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 function frameResponse_(payload) {
   const safePayload = JSON.stringify(payload).replace(/</g, '\\u003c');
   const html = `<!doctype html><meta charset="utf-8"><script>window.parent.postMessage(${safePayload}, '*');<\/script>`;
-  return HtmlService.createHtmlOutput(html).setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  return HtmlService.createHtmlOutput(html)
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
