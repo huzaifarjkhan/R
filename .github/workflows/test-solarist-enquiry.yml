@@ -6,8 +6,12 @@ on:
       test_email:
         description: Valid email that should receive the visitor confirmation
         required: true
-        default: huzaifarjkhan@gmail.com
+        default: khuzaifa75@gmail.com
         type: string
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/test-solarist-enquiry.yml'
 
 permissions:
   contents: read
@@ -19,7 +23,7 @@ jobs:
     steps:
       - name: Submit test enquiry to Google Apps Script
         env:
-          TEST_EMAIL: ${{ inputs.test_email }}
+          TEST_EMAIL: ${{ inputs.test_email || 'khuzaifa75@gmail.com' }}
           ENDPOINT: https://script.google.com/macros/s/AKfycbz2QghMUkVE-aLRTAjIxoGC-xHk0ArBqOP9a52XqDblG6EVhKaMXDXP1Sf1y2fpfgR3/exec
         shell: bash
         run: |
