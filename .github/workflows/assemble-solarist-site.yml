@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - '.site-build/index.part*'
+  issues:
+    types: [opened]
 
 permissions:
   contents: write
