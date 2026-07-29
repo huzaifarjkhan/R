@@ -1,0 +1,133 @@
+name: Apply website interaction fixes
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-website-interaction-fixes.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Patch enquiry confirmation, founder portrait, and navigation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+
+          # 1. Fix Apps Script iframe response handling. The response comes from
+          # script.googleusercontent.com, not solarist.in, so same-origin checks
+          # incorrectly discarded successful confirmations.
+          text = text.replace(
+              "if (!pending || event.origin !== window.location.origin) return;",
+              "if (!pending || event.source !== sink.contentWindow) return;",
+              1,
+          )
+          text = text.replace(
+              "if (!data.ok) {",
+              "if (!data.ok || data.logged !== true) {",
+              1,
+          )
+
+          # Remove the browser-autofill-prone honeypot. Validation and server-side
+          # controls remain in Apps Script.
+          honey_input = '<input type="text" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">'
+          text = text.replace(honey_input, '', 1)
+          honey_js = """    const honeypot = form.querySelector('[name=\"_honey\"]');
+    if (honeypot?.value) return;
+
+"""
+          text = text.replace(honey_js, '', 1)
+
+          # 2. Use the uploaded founder portrait.
+          old_portrait = '<div class="portrait" tabindex="0"><div class="portrait-mark" aria-hidden="true">HK</div><div class="portrait-overlay"><strong>Huzaifa Khan</strong><br>Founder · Solar Engineer · Engineering Tool Builder</div></div>'
+          new_portrait = '<div class="portrait" tabindex="0"><img class="portrait-photo" src="1739488938549.jpg" alt="Huzaifa Khan, founder of Solarist" loading="lazy" decoding="async"><div class="portrait-sheen" aria-hidden="true"></div><div class="portrait-overlay"><strong>Huzaifa Khan</strong><span>Founder · Solar Engineer · Engineering Tool Builder</span></div></div>'
+          if old_portrait not in text:
+              raise SystemExit('Founder portrait placeholder not found')
+          text = text.replace(old_portrait, new_portrait, 1)
+
+          # 3. Replace mobile Menu text with an accessible hamburger icon.
+          old_menu = '<button class="menu" id="menu" aria-expanded="false" aria-controls="navigation">Menu</button>'
+          new_menu = '<button class="menu" id="menu" aria-expanded="false" aria-controls="navigation" aria-label="Open navigation"><span></span><span></span><span></span></button>'
+          if old_menu not in text:
+              raise SystemExit('Menu button not found')
+          text = text.replace(old_menu, new_menu, 1)
+
+          old_menu_js = "const h=document.getElementById('header'),m=document.getElementById('menu'),n=document.getElementById('navigation');m.onclick=()=>{const o=h.classList.toggle('open');m.setAttribute('aria-expanded',o);m.textContent=o?'Close':'Menu'};n.querySelectorAll('a').forEach(a=>a.onclick=()=>{h.classList.remove('open');m.setAttribute('aria-expanded','false');m.textContent='Menu'});"
+          new_menu_js = "const h=document.getElementById('header'),m=document.getElementById('menu'),n=document.getElementById('navigation');m.onclick=()=>{const o=h.classList.toggle('open');m.classList.toggle('is-open',o);m.setAttribute('aria-expanded',o);m.setAttribute('aria-label',o?'Close navigation':'Open navigation')};n.querySelectorAll('a').forEach(a=>a.onclick=()=>{h.classList.remove('open');m.classList.remove('is-open');m.setAttribute('aria-expanded','false');m.setAttribute('aria-label','Open navigation')});"
+          if old_menu_js not in text:
+              raise SystemExit('Menu JavaScript not found')
+          text = text.replace(old_menu_js, new_menu_js, 1)
+
+          # 4. Add polished visual states and transitions as an override layer.
+          enhancements = r'''
+<style id="solarist-interaction-polish-v2">
+.nav-links>a:not(.button){position:relative;padding:.55rem .1rem;transition:color 220ms ease,transform 220ms ease}
+.nav-links>a:not(.button)::after{content:"";position:absolute;left:.1rem;right:.1rem;bottom:.25rem;height:1px;background:var(--sol-action-accent);transform:scaleX(0);transform-origin:right;transition:transform 300ms cubic-bezier(.2,.72,.28,1)}
+.nav-links>a:not(.button):hover,.nav-links>a:not(.button):focus-visible{color:var(--sol-text-accent);transform:translateY(-1px)}
+.nav-links>a:not(.button):hover::after,.nav-links>a:not(.button):focus-visible::after{transform:scaleX(1);transform-origin:left}
+
+.menu{width:2.85rem;height:2.65rem;padding:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:5px;cursor:pointer;transition:border-color 220ms ease,background-color 220ms ease,transform 220ms ease}
+.menu span{display:block;width:19px;height:1.5px;background:currentColor;transition:transform 320ms cubic-bezier(.2,.72,.28,1),opacity 220ms ease,width 220ms ease}
+.menu:hover,.menu:focus-visible{border-color:var(--sol-action-accent);transform:translateY(-1px)}
+.menu.is-open span:nth-child(1){transform:translateY(6.5px) rotate(45deg)}
+.menu.is-open span:nth-child(2){opacity:0;width:0}
+.menu.is-open span:nth-child(3){transform:translateY(-6.5px) rotate(-45deg)}
+
+.portrait{isolation:isolate;background:#11100f;box-shadow:0 20px 50px rgb(17 16 15/.08)}
+.portrait-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 22%;transform:scale(1.015);filter:saturate(.92) contrast(1.02);transition:transform 900ms cubic-bezier(.2,.72,.28,1),filter 600ms ease}
+.portrait-sheen{position:absolute;inset:0;z-index:1;background:linear-gradient(125deg,transparent 28%,rgb(255 255 255/.18) 46%,transparent 63%);transform:translateX(-120%);transition:transform 850ms cubic-bezier(.2,.72,.28,1);pointer-events:none}
+.portrait::after{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(to top,rgb(17 16 15/.76),transparent 48%);opacity:.5;transition:opacity 500ms ease}
+.portrait-overlay{z-index:2;display:flex;flex-direction:column;gap:.18rem;background:linear-gradient(to top,rgb(17 16 15/.94),rgb(17 16 15/.68),transparent);padding:3.5rem 1.25rem 1.25rem;transform:translateY(22%);transition:transform 520ms cubic-bezier(.2,.72,.28,1),background-color 320ms ease}
+.portrait-overlay strong{font-family:var(--sol-font-display);font-size:1.35rem;font-weight:400}
+.portrait-overlay span{font-size:.78rem;color:rgb(255 255 255/.76)}
+.portrait:hover .portrait-photo,.portrait:focus-visible .portrait-photo{transform:scale(1.07);filter:saturate(1) contrast(1.04)}
+.portrait:hover .portrait-sheen,.portrait:focus-visible .portrait-sheen{transform:translateX(120%)}
+.portrait:hover::after,.portrait:focus-visible::after{opacity:.72}
+.portrait:hover .portrait-overlay,.portrait:focus-visible .portrait-overlay{transform:translateY(0)}
+
+.enquiry-confirmation{background:rgb(17 16 15/.58);backdrop-filter:blur(14px) saturate(.8)}
+.enquiry-confirmation-card{position:relative;width:min(34rem,100%);overflow:hidden;border:0;border-radius:2px;padding:clamp(2rem,6vw,3.2rem);box-shadow:0 35px 110px rgb(17 16 15/.32);transform:translateY(32px) scale(.96);opacity:0;transition:transform 520ms cubic-bezier(.16,1,.3,1),opacity 360ms ease}
+.enquiry-confirmation-card::before{content:"";position:absolute;left:0;top:0;width:100%;height:4px;background:var(--sol-action-accent);transform:scaleX(0);transform-origin:left;transition:transform 700ms cubic-bezier(.16,1,.3,1) 160ms}
+.enquiry-confirmation.is-open .enquiry-confirmation-card{transform:translateY(0) scale(1);opacity:1}
+.enquiry-confirmation.is-open .enquiry-confirmation-card::before{transform:scaleX(1)}
+.enquiry-confirmation-mark{width:3rem;height:3rem;border-radius:50%;border:1px solid rgb(168 64 13/.4);background:rgb(168 64 13/.07);font-size:1.15rem;transform:scale(.55) rotate(-12deg);opacity:0;transition:transform 520ms cubic-bezier(.16,1,.3,1) 220ms,opacity 260ms ease 220ms}
+.enquiry-confirmation.is-open .enquiry-confirmation-mark{transform:scale(1) rotate(0);opacity:1}
+.enquiry-confirmation h2{font-size:clamp(2rem,5vw,2.8rem);max-width:12ch}
+.enquiry-confirmation p{max-width:42ch;line-height:1.65}
+.enquiry-confirmation .button{min-width:7rem}
+.form-submit-state{transition:opacity 200ms ease,color 200ms ease}
+
+@media(max-width:48rem){
+  .menu{display:flex}
+  .nav-links{transform:translateY(-8px);opacity:0;visibility:hidden;transition:transform 300ms cubic-bezier(.2,.72,.28,1),opacity 220ms ease,visibility 0s linear 300ms}
+  .site-header.open .nav-links{display:flex;transform:translateY(0);opacity:1;visibility:visible;transition:transform 300ms cubic-bezier(.2,.72,.28,1),opacity 220ms ease,visibility 0s}
+  .nav-links>a{padding:.85rem .2rem}
+  .portrait-overlay{transform:none}
+  .portrait-photo{transform:none}
+}
+@media(prefers-reduced-motion:reduce){.menu span,.nav-links,.nav-links>a,.nav-links>a::after,.portrait-photo,.portrait-sheen,.portrait-overlay,.portrait::after,.enquiry-confirmation-card,.enquiry-confirmation-card::before,.enquiry-confirmation-mark{transition:none!important}}
+</style>
+'''
+          text = text.replace('</head>', enhancements + '</head>', 1)
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
+          rm -f .github/workflows/apply-website-interaction-fixes.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html .github/workflows
+          git commit -m 'Fix enquiry confirmation and polish website interactions'
+          git push
