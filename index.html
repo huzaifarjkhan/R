@@ -255,7 +255,7 @@ const h=document.getElementById('header'),m=document.getElementById('menu'),n=do
   });
 
   window.addEventListener('message', event => {
-    if (!pending || event.source !== sink.contentWindow) return;
+    if (!pending || event.origin !== window.location.origin) return;
     const data = event.data;
     if (!data || data.source !== RESPONSE_SOURCE) return;
 
