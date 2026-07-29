@@ -1,0 +1,164 @@
+const SOLARIST_CONFIG = Object.freeze({
+  SPREADSHEET_ID: '171C7idoa4j-VCMol6JI13D0HYExfY62C1L0uDvtqdSo',
+  OWNER_EMAIL: 'huzaifarjkhan@gmail.com',
+  RESPONSE_SOURCE: 'solarist-enquiry-v1',
+});
+
+function authorizeSolaristEnquiries() {
+  const spreadsheet = SpreadsheetApp.openById(SOLARIST_CONFIG.SPREADSHEET_ID);
+  Logger.log(`Connected to: ${spreadsheet.getName()}`);
+  Logger.log(`Remaining recipient quota: ${MailApp.getRemainingDailyQuota()}`);
+}
+
+function doGet() {
+  return frameResponse_({ source: SOLARIST_CONFIG.RESPONSE_SOURCE, ok: true, health: true });
+}
+
+function doPost(e) {
+  try {
+    const input = normaliseInput_(e && e.parameter ? e.parameter : {});
+    if (input.honeypot) {
+      return frameResponse_({ source: SOLARIST_CONFIG.RESPONSE_SOURCE, ok: true, ignored: true });
+    }
+    validateInput_(input);
+
+    const submittedAt = new Date().toISOString();
+    const row = [
+      submittedAt,
+      safeSheetCell_(input.name),
+      safeSheetCell_(input.company),
+      safeSheetCell_(input.email),
+      safeSheetCell_(input.service),
+      safeSheetCell_(input.projectMarket),
+      safeSheetCell_(input.requirements),
+      safeSheetCell_(input.sourceUrl),
+      'New',
+      '',
+    ];
+
+    const lock = LockService.getScriptLock();
+    lock.waitLock(10000);
+    try {
+      const spreadsheet = SpreadsheetApp.openById(SOLARIST_CONFIG.SPREADSHEET_ID);
+      spreadsheet.getSheets()[0].appendRow(row);
+      SpreadsheetApp.flush();
+    } finally {
+      lock.releaseLock();
+    }
+
+    const mail = sendEnquiryEmails_(input, submittedAt);
+    return frameResponse_({
+      source: SOLARIST_CONFIG.RESPONSE_SOURCE,
+      ok: true,
+      logged: true,
+      ownerEmailSent: mail.ownerEmailSent,
+      visitorEmailSent: mail.visitorEmailSent,
+    });
+  } catch (error) {
+    console.error(error && error.stack ? error.stack : error);
+    return frameResponse_({
+      source: SOLARIST_CONFIG.RESPONSE_SOURCE,
+      ok: false,
+      message: 'We could not process the enquiry right now. Please try again.',
+    });
+  }
+}
+
+function normaliseInput_(p) {
+  return {
+    name: cleanText_(p.name, 120),
+    company: cleanText_(p.company, 160),
+    email: cleanText_(p.email, 254).toLowerCase(),
+    service: cleanText_(p.service, 180),
+    projectMarket: cleanText_(p.project_market || p.projectMarket, 120),
+    requirements: cleanText_(p.message || p.requirements, 5000),
+    sourceUrl: cleanText_(p.source_url || p.sourceUrl, 500),
+    honeypot: cleanText_(p._honey || p.website, 200),
+  };
+}
+
+function validateInput_(input) {
+  if (input.name.length < 2) throw new Error('A valid name is required.');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(input.email)) throw new Error('A valid email is required.');
+  if (input.requirements.length < 10) throw new Error('Requirements must contain at least 10 characters.');
+}
+
+function sendEnquiryEmails_(input, submittedAt) {
+  let ownerEmailSent = false;
+  let visitorEmailSent = false;
+
+  const details = [
+    `Submitted: ${submittedAt}`,
+    `Name: ${input.name}`,
+    `Company: ${input.company || 'Not provided'}`,
+    `Email: ${input.email}`,
+    `Service: ${input.service || 'Not specified'}`,
+    `Project market: ${input.projectMarket || 'Not specified'}`,
+    '',
+    'Requirements:',
+    input.requirements,
+    '',
+    `Source: ${input.sourceUrl || 'Not provided'}`,
+  ].join('\n');
+
+  try {
+    MailApp.sendEmail({
+      to: SOLARIST_CONFIG.OWNER_EMAIL,
+      replyTo: input.email,
+      subject: `New Solarist enquiry — ${input.service || 'Project enquiry'}`,
+      body: `A new Solarist website enquiry has been received.\n\n${details}`,
+      htmlBody: ownerHtml_(input, submittedAt),
+      name: 'Solarist Website',
+    });
+    ownerEmailSent = true;
+  } catch (error) {
+    console.error(`Owner notification failed: ${error}`);
+  }
+
+  try {
+    MailApp.sendEmail({
+      to: input.email,
+      replyTo: SOLARIST_CONFIG.OWNER_EMAIL,
+      subject: 'We received your Solarist enquiry',
+      body: `Hello ${input.name},\n\nThank you for contacting Solarist. Your enquiry has been received. We will review the details and respond within one to two business days.\n\nService: ${input.service || 'Project enquiry'}\nSubmitted: ${submittedAt}\n\nRegards,\nSolarist\nEngineering expertise. Practical automation.`,
+      htmlBody: visitorHtml_(input, submittedAt),
+      name: 'Solarist',
+    });
+    visitorEmailSent = true;
+  } catch (error) {
+    console.error(`Visitor confirmation failed: ${error}`);
+  }
+
+  return { ownerEmailSent, visitorEmailSent };
+}
+
+function ownerHtml_(input, submittedAt) {
+  return `<div style="font-family:Arial,sans-serif;line-height:1.55;color:#161310;max-width:680px"><h2>New Solarist website enquiry</h2><table style="border-collapse:collapse;width:100%">${emailRow_('Submitted', submittedAt)}${emailRow_('Name', input.name)}${emailRow_('Company', input.company || 'Not provided')}${emailRow_('Email', input.email)}${emailRow_('Service', input.service || 'Not specified')}${emailRow_('Project market', input.projectMarket || 'Not specified')}${emailRow_('Source', input.sourceUrl || 'Not provided')}</table><h3>Requirements</h3><div style="white-space:pre-wrap;background:#f5f1e8;padding:16px;border-left:3px solid #d85a1a">${escapeHtml_(input.requirements)}</div></div>`;
+}
+
+function visitorHtml_(input, submittedAt) {
+  return `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#161310;max-width:620px"><p>Hello ${escapeHtml_(input.name)},</p><h2>Your Solarist enquiry has been received.</h2><p>Thank you for reaching out. We will review the details and respond within one to two business days.</p><div style="background:#f5f1e8;padding:16px;margin:22px 0"><strong>Service</strong><br>${escapeHtml_(input.service || 'Project enquiry')}<br><br><strong>Submitted</strong><br>${escapeHtml_(submittedAt)}</div><p>Regards,<br><strong>Solarist</strong><br>Engineering expertise. Practical automation.</p></div>`;
+}
+
+function emailRow_(label, value) {
+  return `<tr><td style="padding:7px 12px 7px 0;color:#655d52;vertical-align:top;width:130px">${escapeHtml_(label)}</td><td style="padding:7px 0;vertical-align:top">${escapeHtml_(value)}</td></tr>`;
+}
+
+function cleanText_(value, maxLength) {
+  return String(value || '').replace(/\u0000/g, '').trim().slice(0, maxLength);
+}
+
+function safeSheetCell_(value) {
+  const text = String(value || '');
+  return /^[=+\-@]/.test(text) ? `'${text}` : text;
+}
+
+function escapeHtml_(value) {
+  return String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function frameResponse_(payload) {
+  const safePayload = JSON.stringify(payload).replace(/</g, '\\u003c');
+  const html = `<!doctype html><meta charset="utf-8"><script>window.parent.postMessage(${safePayload}, '*');<\/script>`;
+  return HtmlService.createHtmlOutput(html).setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
