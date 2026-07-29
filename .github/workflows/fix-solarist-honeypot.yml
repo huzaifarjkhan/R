@@ -1,5 +1,6 @@
 name: Fix Solarist enquiry honeypot
 
+# Second push triggers this workflow after it exists on the default branch.
 on:
   push:
     branches: [main]
@@ -54,7 +55,7 @@ jobs:
 
           rm -f .github/workflows/fix-solarist-honeypot.yml
           git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git config user.email '418982jkhan@users.noreply.github.com'
           git add index.html .github/workflows/fix-solarist-honeypot.yml
           git commit -m 'Fix enquiry logging false positive'
           git push
