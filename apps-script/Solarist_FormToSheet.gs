@@ -2,6 +2,7 @@ const SOLARIST_CONFIG = Object.freeze({
   SPREADSHEET_ID: '171C7idoa4j-VCMol6JI13D0HYExfY62C1L0uDvtqdSo',
   SHEET_NAME: 'Enquiries',
   OWNER_EMAIL: 'huzaifarjkhan@gmail.com',
+  TEST_EMAIL: 'huzaifarjkhan@gmail.com',
   RESPONSE_SOURCE: 'solarist-enquiry-v1',
 });
 
@@ -11,6 +12,27 @@ function authorizeSolaristEnquiries() {
   if (!sheet) throw new Error(`Sheet tab not found: ${SOLARIST_CONFIG.SHEET_NAME}`);
   Logger.log(`Connected to: ${spreadsheet.getName()} / ${sheet.getName()}`);
   Logger.log(`Remaining recipient quota: ${MailApp.getRemainingDailyQuota()}`);
+}
+
+/**
+ * Run this function from the Apps Script editor after deployment.
+ * It writes a clearly labelled test row and attempts both emails.
+ */
+function testSolaristEnquiry() {
+  const input = {
+    name: 'Solarist Integration Test',
+    company: 'Solarist',
+    email: SOLARIST_CONFIG.TEST_EMAIL,
+    service: 'Website form integration test',
+    projectMarket: 'Internal company workflow',
+    requirements: 'Automated test of Google Sheet logging and both MailApp notifications.',
+    sourceUrl: 'apps-script:testSolaristEnquiry',
+  };
+
+  validateInput_(input);
+  const result = processEnquiry_(input);
+  Logger.log(JSON.stringify(result));
+  return result;
 }
 
 function doGet() {
@@ -25,50 +47,62 @@ function doPost(e) {
   try {
     const input = normaliseInput_(e && e.parameter ? e.parameter : {});
     validateInput_(input);
-
-    const submittedAt = new Date().toISOString();
-    const row = [
-      submittedAt,
-      safeSheetCell_(input.name),
-      safeSheetCell_(input.company),
-      safeSheetCell_(input.email),
-      safeSheetCell_(input.service),
-      safeSheetCell_(input.projectMarket),
-      safeSheetCell_(input.requirements),
-      safeSheetCell_(input.sourceUrl),
-      'New',
-      '',
-    ];
-
-    const lock = LockService.getScriptLock();
-    lock.waitLock(10000);
-    try {
-      const spreadsheet = SpreadsheetApp.openById(SOLARIST_CONFIG.SPREADSHEET_ID);
-      const sheet = spreadsheet.getSheetByName(SOLARIST_CONFIG.SHEET_NAME);
-      if (!sheet) throw new Error(`Sheet tab not found: ${SOLARIST_CONFIG.SHEET_NAME}`);
-      sheet.appendRow(row);
-      SpreadsheetApp.flush();
-      console.log(`Solarist enquiry logged in row ${sheet.getLastRow()}`);
-    } finally {
-      lock.releaseLock();
-    }
-
-    const mail = sendEnquiryEmails_(input, submittedAt);
-    return frameResponse_({
-      source: SOLARIST_CONFIG.RESPONSE_SOURCE,
-      ok: true,
-      logged: true,
-      ownerEmailSent: mail.ownerEmailSent,
-      visitorEmailSent: mail.visitorEmailSent,
-    });
+    return frameResponse_(processEnquiry_(input));
   } catch (error) {
     console.error(error && error.stack ? error.stack : error);
     return frameResponse_({
       source: SOLARIST_CONFIG.RESPONSE_SOURCE,
       ok: false,
       logged: false,
-      message: 'We could not process the enquiry right now. Please try again.',
+      message: error && error.message
+        ? error.message
+        : 'We could not process the enquiry right now. Please try again.',
     });
+  }
+}
+
+function processEnquiry_(input) {
+  const submittedAt = new Date().toISOString();
+  const rowNumber = appendEnquiryRow_(input, submittedAt);
+  const mail = sendEnquiryEmails_(input, submittedAt);
+
+  return {
+    source: SOLARIST_CONFIG.RESPONSE_SOURCE,
+    ok: true,
+    logged: true,
+    rowNumber,
+    ownerEmailSent: mail.ownerEmailSent,
+    visitorEmailSent: mail.visitorEmailSent,
+  };
+}
+
+function appendEnquiryRow_(input, submittedAt) {
+  const row = [
+    submittedAt,
+    safeSheetCell_(input.name),
+    safeSheetCell_(input.company),
+    safeSheetCell_(input.email),
+    safeSheetCell_(input.service),
+    safeSheetCell_(input.projectMarket),
+    safeSheetCell_(input.requirements),
+    safeSheetCell_(input.sourceUrl),
+    'New',
+    '',
+  ];
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const spreadsheet = SpreadsheetApp.openById(SOLARIST_CONFIG.SPREADSHEET_ID);
+    const sheet = spreadsheet.getSheetByName(SOLARIST_CONFIG.SHEET_NAME);
+    if (!sheet) throw new Error(`Sheet tab not found: ${SOLARIST_CONFIG.SHEET_NAME}`);
+    sheet.appendRow(row);
+    SpreadsheetApp.flush();
+    const rowNumber = sheet.getLastRow();
+    console.log(`Solarist enquiry logged in ${SOLARIST_CONFIG.SHEET_NAME}!A${rowNumber}:J${rowNumber}`);
+    return rowNumber;
+  } finally {
+    lock.releaseLock();
   }
 }
 
@@ -86,9 +120,12 @@ function normaliseInput_(p) {
 
 function validateInput_(input) {
   if (input.name.length < 2) throw new Error('A valid name is required.');
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(input.email)) {
+
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/;
+  if (!emailPattern.test(input.email) || input.email.includes('..')) {
     throw new Error('A valid email is required.');
   }
+
   if (input.requirements.length < 10) {
     throw new Error('Requirements must contain at least 10 characters.');
   }
