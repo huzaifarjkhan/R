@@ -1,0 +1,293 @@
+name: Apply Solarist UI and form fix
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-solarist-ui-form-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Patch form confirmation, founder portrait, navigation and motion
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+
+          old_menu = '<button class="menu" id="menu" aria-expanded="false" aria-controls="navigation">Menu</button>'
+          new_menu = '''<button class="menu" id="menu" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="navigation"><span class="menu-line"></span><span class="menu-line"></span><span class="menu-line"></span></button>'''
+          if old_menu not in text:
+              raise SystemExit('Menu markup not found')
+          text = text.replace(old_menu, new_menu, 1)
+
+          old_portrait = '''<div class="portrait" tabindex="0"><div class="portrait-mark" aria-hidden="true">HK</div><div class="portrait-overlay"><strong>Huzaifa Khan</strong><br>Founder · Solar Engineer · Engineering Tool Builder</div></div>'''
+          new_portrait = '''<div class="portrait founder-portrait" tabindex="0"><img class="founder-photo" src="1739488938549.jpg" alt="Huzaifa Khan, founder of Solarist" loading="lazy" decoding="async"><div class="portrait-sheen" aria-hidden="true"></div><div class="portrait-overlay"><span class="portrait-label">Founder</span><strong>Huzaifa Khan</strong><span>Solar Engineer · Engineering Tool Builder</span></div></div>'''
+          if old_portrait not in text:
+              raise SystemExit('Founder portrait markup not found')
+          text = text.replace(old_portrait, new_portrait, 1)
+
+          honey = '<input type="text" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">'
+          text = text.replace(honey, '', 1)
+
+          old_textarea = '<textarea id="message" name="message" required></textarea>'
+          new_textarea = '<textarea id="message" name="message" minlength="10" placeholder="Briefly describe the project, expected deliverables and schedule." required></textarea>'
+          if old_textarea not in text:
+              raise SystemExit('Requirements textarea not found')
+          text = text.replace(old_textarea, new_textarea, 1)
+
+          old_nav_script = "const h=document.getElementById('header'),m=document.getElementById('menu'),n=document.getElementById('navigation');m.onclick=()=>{const o=h.classList.toggle('open');m.setAttribute('aria-expanded',o);m.textContent=o?'Close':'Menu'};n.querySelectorAll('a').forEach(a=>a.onclick=()=>{h.classList.remove('open');m.setAttribute('aria-expanded','false');m.textContent='Menu'});"
+          new_nav_script = "const h=document.getElementById('header'),m=document.getElementById('menu'),n=document.getElementById('navigation');const setMenu=o=>{h.classList.toggle('open',o);m.setAttribute('aria-expanded',String(o));m.setAttribute('aria-label',o?'Close navigation':'Open navigation')};m.onclick=()=>setMenu(!h.classList.contains('open'));n.querySelectorAll('a').forEach(a=>a.onclick=()=>setMenu(false));document.addEventListener('keydown',e=>{if(e.key==='Escape')setMenu(false)});"
+          if old_nav_script not in text:
+              raise SystemExit('Navigation script not found')
+          text = text.replace(old_nav_script, new_nav_script, 1)
+
+          old_modal = '''<div class="enquiry-confirmation" id="enquiryConfirmation" aria-hidden="true">
+  <div class="enquiry-confirmation-card" role="dialog" aria-modal="true" aria-labelledby="enquiryConfirmationTitle" tabindex="-1">
+    <div class="enquiry-confirmation-mark" aria-hidden="true">✓</div>
+    <h2 id="enquiryConfirmationTitle">Enquiry submitted.</h2>
+    <p>Thank you for contacting Solarist. Your details have been received, and we will respond within one to two business days.</p>
+    <button class="button primary" type="button" id="enquiryConfirmationClose">Close</button>
+  </div>
+</div>'''
+          new_modal = '''<div class="enquiry-confirmation" id="enquiryConfirmation" aria-hidden="true">
+  <div class="enquiry-confirmation-card" role="dialog" aria-modal="true" aria-labelledby="enquiryConfirmationTitle" tabindex="-1">
+    <button class="enquiry-confirmation-x" type="button" data-confirmation-close aria-label="Close confirmation"><span></span><span></span></button>
+    <div class="enquiry-confirmation-mark" aria-hidden="true"><svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="24"></circle><path d="M15 27l7 7 15-17"></path></svg></div>
+    <p class="enquiry-confirmation-kicker">Message received</p>
+    <h2 id="enquiryConfirmationTitle">Your enquiry is on its way.</h2>
+    <p>Thank you for contacting Solarist. A confirmation has been sent to your email, and the project details have been added to our enquiry register.</p>
+    <div class="enquiry-confirmation-next"><span>What happens next</span><strong>We review the scope and respond within one to two business days.</strong></div>
+    <button class="button primary enquiry-confirmation-action" type="button" id="enquiryConfirmationClose" data-confirmation-close>Return to website</button>
+  </div>
+</div>'''
+          if old_modal not in text:
+              raise SystemExit('Confirmation modal markup not found')
+          text = text.replace(old_modal, new_modal, 1)
+
+          polish_css = r'''
+<style id="solarist-ui-polish-v2">
+.nav-links a:not(.button){position:relative;padding:.45rem .05rem;transition:color 220ms ease,transform 220ms ease}
+.nav-links a:not(.button)::after{content:"";position:absolute;left:0;right:0;bottom:.18rem;height:1px;background:var(--sol-action-accent);transform:scaleX(0);transform-origin:left;transition:transform 280ms cubic-bezier(.2,.72,.28,1)}
+.nav-links a:not(.button):hover,.nav-links a:not(.button):focus-visible{color:var(--sol-text-accent);transform:translateY(-1px)}
+.nav-links a:not(.button):hover::after,.nav-links a:not(.button):focus-visible::after{transform:scaleX(1)}
+.menu{width:2.85rem;height:2.85rem;padding:0;align-items:center;justify-content:center;flex-direction:column;gap:5px;cursor:pointer;transition:border-color 220ms ease,background-color 220ms ease,transform 220ms ease}
+.menu-line{display:block;width:19px;height:1.5px;background:#11100f;transform-origin:center;transition:transform 300ms cubic-bezier(.2,.72,.28,1),opacity 180ms ease,width 220ms ease}
+.site-header.open .menu-line:nth-child(1){transform:translateY(6.5px) rotate(45deg)}
+.site-header.open .menu-line:nth-child(2){opacity:0;width:0}
+.site-header.open .menu-line:nth-child(3){transform:translateY(-6.5px) rotate(-45deg)}
+.menu:hover{border-color:var(--sol-action-accent);background:rgb(168 64 13/.05);transform:translateY(-1px)}
+.founder-portrait{isolation:isolate;background:#11100f;box-shadow:0 24px 60px rgb(17 16 15/.12)}
+.founder-photo{width:100%;height:100%;object-fit:cover;object-position:center 28%;transition:transform 900ms cubic-bezier(.18,.76,.24,1),filter 500ms ease;will-change:transform}
+.portrait-sheen{position:absolute;inset:0;z-index:1;background:linear-gradient(110deg,transparent 15%,rgb(255 255 255/.16) 43%,transparent 62%);transform:translateX(-130%);transition:transform 900ms cubic-bezier(.18,.76,.24,1);pointer-events:none}
+.founder-portrait::after{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(to top,rgb(17 16 15/.92) 0%,rgb(17 16 15/.28) 36%,transparent 64%);transition:opacity 420ms ease}
+.founder-portrait .portrait-overlay{z-index:2;display:flex;flex-direction:column;gap:.22rem;background:transparent;padding:1.35rem;transform:translateY(.5rem);transition:transform 520ms cubic-bezier(.2,.72,.28,1)}
+.portrait-overlay strong{font:400 clamp(1.35rem,2.6vw,2rem)/1.05 var(--sol-font-display)}
+.portrait-overlay>span:last-child{color:rgb(255 255 255/.76);font-size:.78rem}
+.portrait-label{font:600 .62rem var(--sol-font-data);letter-spacing:.12em;text-transform:uppercase;color:#f0b28e}
+.founder-portrait:hover .founder-photo,.founder-portrait:focus-visible .founder-photo{transform:scale(1.045);filter:saturate(1.04) contrast(1.02)}
+.founder-portrait:hover .portrait-sheen,.founder-portrait:focus-visible .portrait-sheen{transform:translateX(130%)}
+.founder-portrait:hover .portrait-overlay,.founder-portrait:focus-visible .portrait-overlay{transform:translateY(0)}
+.enquiry-confirmation{background:rgb(17 16 15/.68);backdrop-filter:blur(14px);opacity:0;visibility:hidden;transition:opacity 300ms ease,visibility 0s linear 300ms}
+.enquiry-confirmation.is-open{opacity:1;visibility:visible;transition:opacity 300ms ease,visibility 0s}
+.enquiry-confirmation-card{position:relative;width:min(36rem,100%);overflow:hidden;background:var(--sol-surface-page);border:1px solid rgb(255 255 255/.28);padding:clamp(1.8rem,5vw,3.2rem);box-shadow:0 40px 110px rgb(0 0 0/.34);transform:translateY(28px) scale(.965);opacity:0;transition:transform 520ms cubic-bezier(.16,.8,.24,1),opacity 360ms ease}
+.enquiry-confirmation-card::before{content:"";position:absolute;inset:0 0 auto;height:4px;background:linear-gradient(90deg,var(--sol-action-accent),var(--sol-color-ember))}
+.enquiry-confirmation.is-open .enquiry-confirmation-card{transform:translateY(0) scale(1);opacity:1}
+.enquiry-confirmation-mark{width:3.5rem;height:3.5rem;border:0;margin-bottom:1.3rem}
+.enquiry-confirmation-mark svg{width:100%;height:100%;overflow:visible}
+.enquiry-confirmation-mark circle{fill:none;stroke:rgb(168 64 13/.22);stroke-width:2}
+.enquiry-confirmation-mark path{fill:none;stroke:var(--sol-action-accent);stroke-width:3;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:34;stroke-dashoffset:34}
+.enquiry-confirmation.is-open .enquiry-confirmation-mark path{animation:solarist-check 650ms 260ms cubic-bezier(.2,.72,.28,1) forwards}
+@keyframes solarist-check{to{stroke-dashoffset:0}}
+.enquiry-confirmation-kicker{margin:0 0 .6rem!important;font:600 .66rem var(--sol-font-data)!important;letter-spacing:.12em;text-transform:uppercase;color:var(--sol-text-accent)!important}
+.enquiry-confirmation h2{font-size:clamp(2rem,5vw,3.2rem);max-width:11ch;margin-bottom:1rem}
+.enquiry-confirmation-next{display:grid;gap:.35rem;margin:1.6rem 0 1.8rem;padding:1rem 1.05rem;border-left:2px solid var(--sol-action-accent);background:var(--sol-surface-warm)}
+.enquiry-confirmation-next span{font:600 .62rem var(--sol-font-data);letter-spacing:.1em;text-transform:uppercase;color:var(--sol-text-accent)}
+.enquiry-confirmation-next strong{font-size:.86rem;font-weight:600}
+.enquiry-confirmation-action{cursor:pointer}
+.enquiry-confirmation-x{position:absolute;top:1rem;right:1rem;width:2.35rem;height:2.35rem;border:1px solid var(--sol-border-subtle);background:transparent;cursor:pointer;transition:transform 240ms ease,border-color 240ms ease,background-color 240ms ease}
+.enquiry-confirmation-x span{position:absolute;left:50%;top:50%;width:14px;height:1px;background:#11100f}
+.enquiry-confirmation-x span:first-child{transform:translate(-50%,-50%) rotate(45deg)}
+.enquiry-confirmation-x span:last-child{transform:translate(-50%,-50%) rotate(-45deg)}
+.enquiry-confirmation-x:hover{transform:rotate(90deg);border-color:var(--sol-action-accent);background:rgb(168 64 13/.05)}
+.form-submit-state[data-state="error"]{color:var(--sol-color-error)}
+.form-submit-state[data-state="progress"]{color:var(--sol-text-muted)}
+@media(max-width:48rem){
+  .menu{display:flex}
+  .nav-links{display:flex!important;opacity:0;visibility:hidden;pointer-events:none;transform:translateY(-10px);transition:opacity 260ms ease,transform 300ms cubic-bezier(.2,.72,.28,1),visibility 0s linear 300ms;box-shadow:0 18px 40px rgb(17 16 15/.08)}
+  .site-header.open .nav-links{opacity:1;visibility:visible;pointer-events:auto;transform:translateY(0);transition:opacity 260ms ease,transform 300ms cubic-bezier(.2,.72,.28,1),visibility 0s}
+  .nav-links a{opacity:0;transform:translateY(-5px);transition:opacity 220ms ease,transform 260ms ease}
+  .site-header.open .nav-links a{opacity:1;transform:translateY(0)}
+  .site-header.open .nav-links a:nth-child(2){transition-delay:35ms}.site-header.open .nav-links a:nth-child(3){transition-delay:70ms}.site-header.open .nav-links a:nth-child(4){transition-delay:105ms}.site-header.open .nav-links a:nth-child(5){transition-delay:140ms}.site-header.open .nav-links a:nth-child(6){transition-delay:175ms}
+  .founder-photo{object-position:center 24%}
+  .enquiry-confirmation-card{padding:2rem 1.35rem 1.45rem}
+}
+@media(prefers-reduced-motion:reduce){.founder-photo,.portrait-sheen,.portrait-overlay,.enquiry-confirmation,.enquiry-confirmation-card,.menu-line,.nav-links,.nav-links a{transition:none!important;animation:none!important}.enquiry-confirmation-mark path{stroke-dashoffset:0!important}}
+</style>
+'''
+          if 'id="solarist-ui-polish-v2"' not in text:
+              text = text.replace('</head>', polish_css + '</head>', 1)
+
+          new_form_script = r'''<script id="solarist-apps-script-form-script">
+(() => {
+  const RESPONSE_SOURCE = 'solarist-enquiry-v1';
+  const form = document.getElementById('solaristEnquiryForm');
+  const sink = document.getElementById('solaristSheetSink');
+  const modal = document.getElementById('enquiryConfirmation');
+  const modalCard = modal?.querySelector('.enquiry-confirmation-card');
+  const closeButtons = modal?.querySelectorAll('[data-confirmation-close]') || [];
+  if (!form || !sink || !modal || !closeButtons.length) return;
+
+  let pending = false;
+  let timeoutId = 0;
+  let lastFocused = null;
+  let submitButton = null;
+  let originalLabel = '';
+
+  let state = form.querySelector('.form-submit-state');
+  if (!state) {
+    state = document.createElement('p');
+    state.className = 'form-submit-state';
+    state.setAttribute('role', 'status');
+    state.setAttribute('aria-live', 'polite');
+    form.appendChild(state);
+  }
+
+  const setState = (message, type = '') => {
+    state.textContent = message;
+    if (type) state.dataset.state = type;
+    else delete state.dataset.state;
+  };
+
+  const restoreButton = () => {
+    if (!submitButton) return;
+    submitButton.disabled = false;
+    submitButton.textContent = originalLabel || 'Send enquiry';
+  };
+
+  const openConfirmation = () => {
+    lastFocused = document.activeElement;
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    window.setTimeout(() => modalCard?.focus(), 90);
+  };
+
+  const closeConfirmation = () => {
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    lastFocused?.focus?.();
+  };
+
+  const failSubmission = message => {
+    pending = false;
+    window.clearTimeout(timeoutId);
+    restoreButton();
+    setState(message || 'We could not confirm delivery. Please try again.', 'error');
+  };
+
+  const completeSubmission = () => {
+    pending = false;
+    window.clearTimeout(timeoutId);
+    form.reset();
+    setState('');
+    restoreButton();
+    openConfirmation();
+  };
+
+  closeButtons.forEach(button => button.addEventListener('click', closeConfirmation));
+  modal.addEventListener('click', event => {
+    if (event.target === modal) closeConfirmation();
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && modal.classList.contains('is-open')) closeConfirmation();
+  });
+
+  sink.addEventListener('load', () => {
+    if (pending) setState('Finalising your enquiry…', 'progress');
+  });
+
+  window.addEventListener('message', event => {
+    if (!pending) return;
+    const trustedGoogleOrigin = event.origin === 'https://script.google.com' || event.origin.endsWith('.googleusercontent.com');
+    if (!trustedGoogleOrigin) return;
+
+    let data = event.data;
+    if (typeof data === 'string') {
+      try { data = JSON.parse(data); } catch { return; }
+    }
+    if (!data || data.source !== RESPONSE_SOURCE) return;
+
+    if (!data.ok || data.logged !== true) {
+      failSubmission(data.message || 'The enquiry was not recorded. Please review the details and try again.');
+      return;
+    }
+    completeSubmission();
+  });
+
+  form.addEventListener('submit', event => {
+    event.preventDefault();
+    if (pending) return;
+
+    const messageField = form.querySelector('#message');
+    if (messageField) {
+      messageField.setCustomValidity(messageField.value.trim().length < 10 ? 'Please provide at least 10 characters so we can understand the requirement.' : '');
+    }
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+
+    const sourceField = document.getElementById('formSourceUrl');
+    if (sourceField) sourceField.value = window.location.href;
+
+    submitButton = form.querySelector('button[type="submit"],input[type="submit"]');
+    originalLabel = submitButton?.textContent || '';
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.textContent = 'Sending…';
+    }
+
+    pending = true;
+    setState('Securely submitting your enquiry…', 'progress');
+    timeoutId = window.setTimeout(() => {
+      if (pending) failSubmission('We could not confirm the submission. Please check your connection and try again.');
+    }, 30000);
+
+    try {
+      HTMLFormElement.prototype.submit.call(form);
+    } catch (error) {
+      console.error('Solarist enquiry submission failed:', error);
+      failSubmission('We could not submit the enquiry. Please try again.');
+    }
+  });
+})();
+</script>'''
+          pattern = re.compile(r'<script id="solarist-apps-script-form-script">.*?</script>', re.S)
+          text, count = pattern.subn(new_form_script, text, count=1)
+          if count != 1:
+              raise SystemExit('Apps Script form handler block not found')
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
+          rm -f .github/workflows/apply-solarist-ui-form-fix.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html .github/workflows/apply-solarist-ui-form-fix.yml
+          git commit -m 'Fix website enquiry confirmation and polish interactions'
+          git push
