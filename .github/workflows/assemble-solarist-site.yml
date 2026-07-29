@@ -1,0 +1,35 @@
+name: Assemble Solarist site
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.site-build/index.part*'
+
+permissions:
+  contents: write
+
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Assemble and publish index
+        shell: bash
+        run: |
+          set -euo pipefail
+          count=$(find .site-build -maxdepth 1 -type f -name 'index.part*' | wc -l)
+          if [ "$count" -ne 6 ]; then
+            echo "Waiting for all six site parts; found $count."
+            exit 0
+          fi
+          find .site-build -maxdepth 1 -type f -name 'index.part*' -print0 | sort -z | xargs -0 cat | base64 --decode > index.html
+          grep -q '</html>' index.html
+          rm -f .site-build/index.part*
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html .site-build
+          git commit -m 'Refine Solarist services, typography and experience metrics'
+          git push
