@@ -1,0 +1,95 @@
+name: Fix Solarist enquiry form reliability
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-enquiry-form.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Harden enquiry response handling
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+
+          old = """  window.addEventListener('message', event => {
+    if (!pending || event.origin !== window.location.origin) return;
+    const data = event.data;
+    if (!data || data.source !== RESPONSE_SOURCE) return;
+
+    if (!data.ok) {
+      failSubmission(data.message);
+      return;
+    }
+
+    pending = false;
+    window.clearTimeout(timeoutId);
+    form.reset();
+    state.textContent = '';
+    restoreButton();
+    openConfirmation();
+  });
+"""
+
+          new = """  const completeSubmission = data => {
+    if (!pending || !data || data.source !== RESPONSE_SOURCE) return;
+    if (!data.ok) {
+      failSubmission(data.message);
+      return;
+    }
+
+    pending = false;
+    window.clearTimeout(timeoutId);
+    form.reset();
+    state.textContent = '';
+    restoreButton();
+    openConfirmation();
+  };
+
+  const trustedOrigins = new Set([
+    window.location.origin,
+    'https://solarist.in',
+    'https://www.solarist.in',
+  ]);
+
+  window.addEventListener('message', event => {
+    if (!trustedOrigins.has(event.origin)) return;
+    completeSubmission(event.data);
+  });
+
+  sink.addEventListener('load', () => {
+    if (!pending) return;
+    try {
+      const frameLocation = sink.contentWindow.location;
+      if (!trustedOrigins.has(frameLocation.origin) || !frameLocation.hash) return;
+      const data = JSON.parse(decodeURIComponent(frameLocation.hash.slice(1)));
+      completeSubmission(data);
+    } catch (_) {
+      // Cross-origin loads are expected while Apps Script processes the request.
+    }
+  });
+"""
+
+          if old not in text:
+              raise SystemExit('Expected enquiry response block was not found; no changes made.')
+
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+
+      - name: Commit fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Harden enquiry confirmation response handling"
+          git push
