@@ -21,8 +21,8 @@ jobs:
         run: |
           set -euo pipefail
           published=false
-          for attempt in $(seq 1 30); do
-            if curl --silent --show-error --location --max-time 20 https://solarist.in/ | grep -q "const responseOrigins = new Set"; then
+          for attempt in $(seq 1 36); do
+            if curl --silent --show-error --location --max-time 20 https://solarist.in/ | grep -q 'solarist-enquiry-experience-v2'; then
               published=true
               break
             fi
@@ -41,7 +41,7 @@ jobs:
           npm install playwright@1.55.0 >/dev/null 2>&1
           npx playwright install --with-deps chromium >/dev/null
 
-      - name: Submit live form and verify popup
+      - name: Submit live form and verify polished experience
         shell: bash
         env:
           TEST_EMAIL: khuzaifa75@gmail.com
@@ -54,7 +54,7 @@ jobs:
           # Solarist live form verification
 
           - Result: **FAIL**
-          - Reason: The latest enquiry-response code was not visible on the published GitHub Pages site within the verification window.
+          - Reason: The polished enquiry experience was not visible on the published site within the verification window.
           EOF
           else
             cd /tmp/solarist-e2e
@@ -68,25 +68,59 @@ jobs:
             const output = path.join(workspace, 'diagnostics/live-form-latest.md');
             const browser = await chromium.launch({ headless: true });
             const page = await browser.newPage({ viewport: { width: 1365, height: 900 } });
-            const started = new Date().toISOString();
+            const checked = new Date().toISOString();
             let result = 'FAIL';
             let detail = '';
             let statusText = '';
+            let sendingMs = null;
+            let confirmedMs = null;
+            let closeMs = null;
+            let autofill = {};
 
             try {
               await page.goto('https://solarist.in/#contact', { waitUntil: 'networkidle', timeout: 60000 });
-              await page.fill('#name', 'Solarist Live Browser Test');
+
+              autofill = await page.evaluate(() => ({
+                form: document.querySelector('#solaristEnquiryForm')?.getAttribute('autocomplete'),
+                name: document.querySelector('#name')?.getAttribute('autocomplete'),
+                company: document.querySelector('#company')?.getAttribute('autocomplete'),
+                email: document.querySelector('#email')?.getAttribute('autocomplete'),
+                emailInputMode: document.querySelector('#email')?.getAttribute('inputmode'),
+                message: document.querySelector('#message')?.getAttribute('autocomplete'),
+              }));
+
+              await page.fill('#name', 'Solarist Polished UX Test');
               await page.fill('#company', 'Solarist');
               await page.fill('#email', process.env.TEST_EMAIL);
               await page.selectOption('#market', { label: 'Internal company workflow' });
               await page.selectOption('#service', { label: 'Other technical enquiry' });
-              await page.fill('#message', 'Live browser verification of Sheet logging, both emails, and the confirmation popup.');
+              await page.fill('#message', 'Live browser verification of the immediate sending state, confirmed success, smooth closing and browser autofill support.');
+
+              const started = Date.now();
               await page.click('#solaristEnquiryForm button[type="submit"]');
-              await page.waitForSelector('#enquiryConfirmation.is-open', { state: 'visible', timeout: 45000 });
+              await page.waitForSelector('#enquiryConfirmation.is-open[data-state="sending"]', { state: 'visible', timeout: 1500 });
+              sendingMs = Date.now() - started;
+
+              await page.waitForFunction(() => {
+                const modal = document.getElementById('enquiryConfirmation');
+                return modal?.classList.contains('is-open') && modal.dataset.state === 'success';
+              }, null, { timeout: 45000 });
+              confirmedMs = Date.now() - started;
+
               const heading = (await page.locator('#enquiryConfirmationTitle').textContent() || '').trim();
               if (heading !== 'Enquiry submitted.') throw new Error(`Unexpected confirmation heading: ${heading}`);
+
+              const closeStarted = Date.now();
+              await page.click('#enquiryConfirmationClose');
+              await page.waitForFunction(() => !document.getElementById('enquiryConfirmation')?.classList.contains('is-open'), null, { timeout: 2000 });
+              closeMs = Date.now() - closeStarted;
+
+              const autofillOkay = autofill.form === 'on' && autofill.name === 'name' && autofill.company === 'organization' && autofill.email === 'email' && autofill.emailInputMode === 'email' && autofill.message === 'on';
+              if (!autofillOkay) throw new Error(`Unexpected autofill attributes: ${JSON.stringify(autofill)}`);
+              if (sendingMs > 1000) throw new Error(`Sending feedback appeared too slowly: ${sendingMs} ms`);
+
               result = 'PASS';
-              detail = 'The published site submitted the form and displayed the confirmation popup.';
+              detail = 'Immediate sending feedback, confirmed success, close transition and autofill markup all passed.';
             } catch (error) {
               statusText = (await page.locator('.form-submit-state').textContent().catch(() => ''))?.trim() || '';
               detail = `${error.name}: ${error.message}`;
@@ -94,9 +128,13 @@ jobs:
               const lines = [
                 '# Solarist live form verification',
                 '',
-                `- Checked: \`${started}\``,
+                `- Checked: \`${checked}\``,
                 `- Result: **${result}**`,
                 `- Detail: ${detail}`,
+                `- Sending panel visible after: ${sendingMs === null ? 'Not observed' : `**${sendingMs} ms**`}`,
+                `- Server-confirmed success after: ${confirmedMs === null ? 'Not observed' : `**${confirmedMs} ms**`}`,
+                `- Close transition completed in: ${closeMs === null ? 'Not observed' : `**${closeMs} ms**`}`,
+                `- Autofill attributes: \`${JSON.stringify(autofill)}\``,
                 `- Visible form status: ${statusText || 'None'}`,
                 '',
               ];
@@ -118,6 +156,6 @@ jobs:
           if git diff --cached --quiet; then
             echo 'No verification change to commit.'
           else
-            git commit -m 'Record live Solarist enquiry verification'
+            git commit -m 'Record polished Solarist enquiry verification'
             git push
           fi
