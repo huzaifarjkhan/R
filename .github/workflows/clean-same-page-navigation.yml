@@ -1,0 +1,96 @@
+name: Clean Solarist same-page navigation
+
+on:
+  issues:
+    types: [opened]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.event_name != 'issues' || github.event.issue.title == 'Clean Solarist section URLs'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Add clean same-page navigation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+          marker = 'id="solarist-clean-section-navigation"'
+          if marker in text:
+              raise SystemExit('Clean section navigation is already installed.')
+
+          script = r'''
+<script id="solarist-clean-section-navigation">
+(() => {
+  const cleanAddress = () => `${window.location.pathname}${window.location.search}`;
+
+  const findSection = hash => {
+    if (!hash || hash === '#') return null;
+    try {
+      return document.getElementById(decodeURIComponent(hash.slice(1)));
+    } catch (_) {
+      return null;
+    }
+  };
+
+  const scrollWithoutHash = (hash, behavior = 'smooth') => {
+    const section = findSection(hash);
+    if (!section) return false;
+    section.scrollIntoView({ behavior, block: 'start' });
+    window.history.replaceState(window.history.state, '', cleanAddress());
+    return true;
+  };
+
+  document.addEventListener('click', event => {
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey || event.ctrlKey || event.shiftKey || event.altKey
+    ) return;
+
+    const link = event.target.closest('a[href^="#"]');
+    if (!link) return;
+
+    const hash = link.getAttribute('href');
+    if (!findSection(hash)) return;
+
+    event.preventDefault();
+    scrollWithoutHash(hash, 'smooth');
+  });
+
+  if (window.location.hash) {
+    const initialHash = window.location.hash;
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => scrollWithoutHash(initialHash, 'auto'));
+    });
+  }
+})();
+</script>
+'''
+
+          closing = '</body></html>'
+          if closing not in text:
+              raise SystemExit('Closing body marker not found.')
+          text = text.replace(closing, script + closing, 1)
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Commit navigation improvement
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Keep same-page navigation URLs clean'
+          git push
