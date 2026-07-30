@@ -18,9 +18,13 @@ jobs:
 
       - name: Install clean same-page navigation
         shell: bash
+        env:
+          NAV_SCRIPT_B64: CjxzY3JpcHQgaWQ9InNvbGFyaXN0LWNsZWFuLXNlY3Rpb24tbmF2aWdhdGlvbiI+CigoKSA9PiB7CiAgY29uc3QgY2xlYW5BZGRyZXNzID0gKCkgPT4gYCR7d2luZG93LmxvY2F0aW9uLnBhdGhuYW1lfSR7d2luZG93LmxvY2F0aW9uLnNlYXJjaH1gOwoKICBjb25zdCBmaW5kU2VjdGlvbiA9IGhhc2ggPT4gewogICAgaWYgKCFoYXNoIHx8IGhhc2ggPT09ICcjJykgcmV0dXJuIG51bGw7CiAgICB0cnkgewogICAgICByZXR1cm4gZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoZGVjb2RlVVJJQ29tcG9uZW50KGhhc2guc2xpY2UoMSkpKTsKICAgIH0gY2F0Y2ggKF8pIHsKICAgICAgcmV0dXJuIG51bGw7CiAgICB9CiAgfTsKCiAgY29uc3Qgc2Nyb2xsV2l0aG91dEhhc2ggPSAoaGFzaCwgYmVoYXZpb3IgPSAnc21vb3RoJykgPT4gewogICAgY29uc3Qgc2VjdGlvbiA9IGZpbmRTZWN0aW9uKGhhc2gpOwogICAgaWYgKCFzZWN0aW9uKSByZXR1cm4gZmFsc2U7CiAgICBzZWN0aW9uLnNjcm9sbEludG9WaWV3KHsgYmVoYXZpb3IsIGJsb2NrOiAnc3RhcnQnIH0pOwogICAgd2luZG93Lmhpc3RvcnkucmVwbGFjZVN0YXRlKHdpbmRvdy5oaXN0b3J5LnN0YXRlLCAnJywgY2xlYW5BZGRyZXNzKCkpOwogICAgcmV0dXJuIHRydWU7CiAgfTsKCiAgZG9jdW1lbnQuYWRkRXZlbnRMaXN0ZW5lcignY2xpY2snLCBldmVudCA9PiB7CiAgICBpZiAoCiAgICAgIGV2ZW50LmRlZmF1bHRQcmV2ZW50ZWQgfHwKICAgICAgZXZlbnQuYnV0dG9uICE9PSAwIHx8CiAgICAgIGV2ZW50Lm1ldGFLZXkgfHwgZXZlbnQuY3RybEtleSB8fCBldmVudC5zaGlmdEtleSB8fCBldmVudC5hbHRLZXkKICAgICkgcmV0dXJuOwoKICAgIGNvbnN0IGxpbmsgPSBldmVudC50YXJnZXQuY2xvc2VzdCgnYVtocmVmXj0iIyJdJyk7CiAgICBpZiAoIWxpbmspIHJldHVybjsKCiAgICBjb25zdCBoYXNoID0gbGluay5nZXRBdHRyaWJ1dGUoJ2hyZWYnKTsKICAgIGlmICghZmluZFNlY3Rpb24oaGFzaCkpIHJldHVybjsKCiAgICBldmVudC5wcmV2ZW50RGVmYXVsdCgpOwogICAgc2Nyb2xsV2l0aG91dEhhc2goaGFzaCwgJ3Ntb290aCcpOwogIH0pOwoKICBpZiAod2luZG93LmxvY2F0aW9uLmhhc2gpIHsKICAgIGNvbnN0IGluaXRpYWxIYXNoID0gd2luZG93LmxvY2F0aW9uLmhhc2g7CiAgICB3aW5kb3cucmVxdWVzdEFuaW1hdGlvbkZyYW1lKCgpID0+IHsKICAgICAgd2luZG93LnJlcXVlc3RBbmltYXRpb25GcmFtZSgoKSA9PiBzY3JvbGxXaXRob3V0SGFzaChpbml0aWFsSGFzaCwgJ2F1dG8nKSk7CiAgICB9KTsKICB9Cn0pKCk7Cjwvc2NyaXB0Pgo=
         run: |
           set -euo pipefail
           python - <<'PY'
+          import base64
+          import os
           from pathlib import Path
 
           path = Path('index.html')
@@ -28,54 +32,7 @@ jobs:
           marker = 'id="solarist-clean-section-navigation"'
 
           if marker not in text:
-              script = r'''
-<script id="solarist-clean-section-navigation">
-(() => {
-  const cleanAddress = () => `${window.location.pathname}${window.location.search}`;
-
-  const findSection = hash => {
-    if (!hash || hash === '#') return null;
-    try {
-      return document.getElementById(decodeURIComponent(hash.slice(1)));
-    } catch (_) {
-      return null;
-    }
-  };
-
-  const scrollWithoutHash = (hash, behavior = 'smooth') => {
-    const section = findSection(hash);
-    if (!section) return false;
-    section.scrollIntoView({ behavior, block: 'start' });
-    window.history.replaceState(window.history.state, '', cleanAddress());
-    return true;
-  };
-
-  document.addEventListener('click', event => {
-    if (
-      event.defaultPrevented ||
-      event.button !== 0 ||
-      event.metaKey || event.ctrlKey || event.shiftKey || event.altKey
-    ) return;
-
-    const link = event.target.closest('a[href^="#"]');
-    if (!link) return;
-
-    const hash = link.getAttribute('href');
-    if (!findSection(hash)) return;
-
-    event.preventDefault();
-    scrollWithoutHash(hash, 'smooth');
-  });
-
-  if (window.location.hash) {
-    const initialHash = window.location.hash;
-    window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(() => scrollWithoutHash(initialHash, 'auto'));
-    });
-  }
-})();
-</script>
-'''
+              script = base64.b64decode(os.environ['NAV_SCRIPT_B64']).decode('utf-8')
               closing = '</body></html>'
               if closing not in text:
                   raise SystemExit('Closing body marker not found.')
