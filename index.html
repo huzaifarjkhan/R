@@ -254,8 +254,14 @@ const h=document.getElementById('header'),m=document.getElementById('menu'),n=do
     if (event.key === 'Escape' && modal.classList.contains('is-open')) closeConfirmation();
   });
 
+  const responseOrigins = new Set([
+    window.location.origin,
+    'https://solarist.in',
+    'https://www.solarist.in',
+  ]);
+
   window.addEventListener('message', event => {
-    if (!pending || event.source !== sink.contentWindow) return;
+    if (!pending || !responseOrigins.has(event.origin)) return;
     const data = event.data;
     if (!data || data.source !== RESPONSE_SOURCE) return;
 
