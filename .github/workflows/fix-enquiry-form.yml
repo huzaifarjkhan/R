@@ -1,17 +1,16 @@
 name: Repair and verify Solarist enquiry form
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/fix-enquiry-form.yml'
   workflow_dispatch:
+  issues:
+    types: [opened]
 
 permissions:
   contents: write
 
 jobs:
   repair-and-test:
+    if: github.event_name != 'issues' || github.event.issue.title == 'Run Solarist enquiry repair'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -121,7 +120,6 @@ jobs:
 
           python - <<'PY'
           import datetime as dt
-          import html
           import json
           import os
           import re
