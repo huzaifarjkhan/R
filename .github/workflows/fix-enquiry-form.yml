@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Harden browser confirmation handling
+      - name: Fix browser confirmation response
         shell: bash
         run: |
           set -euo pipefail
@@ -25,72 +25,13 @@ jobs:
 
           path = Path('index.html')
           text = path.read_text(encoding='utf-8')
-
-          old = """  window.addEventListener('message', event => {
-            if (!pending || event.origin !== window.location.origin) return;
-            const data = event.data;
-            if (!data || data.source !== RESPONSE_SOURCE) return;
-
-            if (!data.ok) {
-              failSubmission(data.message);
-              return;
-            }
-
-            pending = false;
-            window.clearTimeout(timeoutId);
-            form.reset();
-            state.textContent = '';
-            restoreButton();
-            openConfirmation();
-          });
-          """
-
-          new = """  const completeSubmission = data => {
-            if (!pending || !data || data.source !== RESPONSE_SOURCE) return;
-            if (!data.ok) {
-              failSubmission(data.message);
-              state.setAttribute('role', 'alert');
-              state.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-              return;
-            }
-
-            pending = false;
-            window.clearTimeout(timeoutId);
-            form.reset();
-            state.textContent = '';
-            state.setAttribute('role', 'status');
-            restoreButton();
-            openConfirmation();
-          };
-
-          const trustedOrigins = new Set([
-            window.location.origin,
-            'https://solarist.in',
-            'https://www.solarist.in',
-          ]);
-
-          window.addEventListener('message', event => {
-            if (event.source !== sink.contentWindow || !trustedOrigins.has(event.origin)) return;
-            completeSubmission(event.data);
-          });
-
-          sink.addEventListener('load', () => {
-            if (!pending) return;
-            try {
-              const frameLocation = sink.contentWindow.location;
-              if (!trustedOrigins.has(frameLocation.origin) || !frameLocation.hash) return;
-              const data = JSON.parse(decodeURIComponent(frameLocation.hash.slice(1)));
-              completeSubmission(data);
-            } catch (_) {
-              // Cross-origin loads are expected while Apps Script processes the request.
-            }
-          });
-          """
+          old = "if (!pending || event.origin !== window.location.origin) return;"
+          new = "if (!pending || event.source !== sink.contentWindow) return;"
 
           if old in text:
               text = text.replace(old, new, 1)
-          elif "const completeSubmission = data =>" not in text:
-              raise SystemExit('Expected enquiry response block was not found; no frontend changes made.')
+          elif new not in text:
+              raise SystemExit('Enquiry message guard was not found.')
 
           path.write_text(text, encoding='utf-8')
           PY
@@ -101,7 +42,7 @@ jobs:
           ENDPOINT: https://script.google.com/macros/s/AKfycbz2QghMUkVE-aLRTAjIxoGC-xHk0ArBqOP9a52XqDblG6EVhKaMXDXP1Sf1y2fpfgR3/exec
           TEST_EMAIL: khuzaifa75@gmail.com
         run: |
-          set -u
+          set +e
           mkdir -p diagnostics
           http_code=$(curl --silent --show-error --location \
             --max-time 45 \
@@ -185,6 +126,6 @@ jobs:
           if git diff --cached --quiet; then
             echo 'No repository changes were needed.'
           else
-            git commit -m 'Repair enquiry response handling and record endpoint diagnostic'
+            git commit -m 'Repair enquiry confirmation and record backend diagnostic'
             git push
           fi
