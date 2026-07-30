@@ -1,7 +1,8 @@
-name: Fix Solarist enquiry form reliability
+name: Repair and verify Solarist enquiry form
 
 on:
   push:
+    branches: [main]
     paths:
       - '.github/workflows/fix-enquiry-form.yml'
   workflow_dispatch:
@@ -10,12 +11,16 @@ permissions:
   contents: write
 
 jobs:
-  patch:
+  repair-and-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v5
-      - name: Harden enquiry response handling
+
+      - name: Harden browser confirmation handling
+        shell: bash
         run: |
+          set -euo pipefail
           python - <<'PY'
           from pathlib import Path
 
@@ -23,73 +28,165 @@ jobs:
           text = path.read_text(encoding='utf-8')
 
           old = """  window.addEventListener('message', event => {
-    if (!pending || event.origin !== window.location.origin) return;
-    const data = event.data;
-    if (!data || data.source !== RESPONSE_SOURCE) return;
+            if (!pending || event.origin !== window.location.origin) return;
+            const data = event.data;
+            if (!data || data.source !== RESPONSE_SOURCE) return;
 
-    if (!data.ok) {
-      failSubmission(data.message);
-      return;
-    }
+            if (!data.ok) {
+              failSubmission(data.message);
+              return;
+            }
 
-    pending = false;
-    window.clearTimeout(timeoutId);
-    form.reset();
-    state.textContent = '';
-    restoreButton();
-    openConfirmation();
-  });
-"""
+            pending = false;
+            window.clearTimeout(timeoutId);
+            form.reset();
+            state.textContent = '';
+            restoreButton();
+            openConfirmation();
+          });
+          """
 
           new = """  const completeSubmission = data => {
-    if (!pending || !data || data.source !== RESPONSE_SOURCE) return;
-    if (!data.ok) {
-      failSubmission(data.message);
-      return;
-    }
+            if (!pending || !data || data.source !== RESPONSE_SOURCE) return;
+            if (!data.ok) {
+              failSubmission(data.message);
+              state.setAttribute('role', 'alert');
+              state.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+              return;
+            }
 
-    pending = false;
-    window.clearTimeout(timeoutId);
-    form.reset();
-    state.textContent = '';
-    restoreButton();
-    openConfirmation();
-  };
+            pending = false;
+            window.clearTimeout(timeoutId);
+            form.reset();
+            state.textContent = '';
+            state.setAttribute('role', 'status');
+            restoreButton();
+            openConfirmation();
+          };
 
-  const trustedOrigins = new Set([
-    window.location.origin,
-    'https://solarist.in',
-    'https://www.solarist.in',
-  ]);
+          const trustedOrigins = new Set([
+            window.location.origin,
+            'https://solarist.in',
+            'https://www.solarist.in',
+          ]);
 
-  window.addEventListener('message', event => {
-    if (!trustedOrigins.has(event.origin)) return;
-    completeSubmission(event.data);
-  });
+          window.addEventListener('message', event => {
+            if (event.source !== sink.contentWindow || !trustedOrigins.has(event.origin)) return;
+            completeSubmission(event.data);
+          });
 
-  sink.addEventListener('load', () => {
-    if (!pending) return;
-    try {
-      const frameLocation = sink.contentWindow.location;
-      if (!trustedOrigins.has(frameLocation.origin) || !frameLocation.hash) return;
-      const data = JSON.parse(decodeURIComponent(frameLocation.hash.slice(1)));
-      completeSubmission(data);
-    } catch (_) {
-      // Cross-origin loads are expected while Apps Script processes the request.
-    }
-  });
-"""
+          sink.addEventListener('load', () => {
+            if (!pending) return;
+            try {
+              const frameLocation = sink.contentWindow.location;
+              if (!trustedOrigins.has(frameLocation.origin) || !frameLocation.hash) return;
+              const data = JSON.parse(decodeURIComponent(frameLocation.hash.slice(1)));
+              completeSubmission(data);
+            } catch (_) {
+              // Cross-origin loads are expected while Apps Script processes the request.
+            }
+          });
+          """
 
-          if old not in text:
-              raise SystemExit('Expected enquiry response block was not found; no changes made.')
+          if old in text:
+              text = text.replace(old, new, 1)
+          elif "const completeSubmission = data =>" not in text:
+              raise SystemExit('Expected enquiry response block was not found; no frontend changes made.')
 
-          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          path.write_text(text, encoding='utf-8')
           PY
 
-      - name: Commit fix
+      - name: Test deployed Apps Script endpoint
+        shell: bash
+        env:
+          ENDPOINT: https://script.google.com/macros/s/AKfycbz2QghMUkVE-aLRTAjIxoGC-xHk0ArBqOP9a52XqDblG6EVhKaMXDXP1Sf1y2fpfgR3/exec
+          TEST_EMAIL: khuzaifa75@gmail.com
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html
-          git commit -m "Harden enquiry confirmation response handling"
-          git push
+          set -u
+          mkdir -p diagnostics
+          http_code=$(curl --silent --show-error --location \
+            --max-time 45 \
+            --output /tmp/solarist-apps-script-response.html \
+            --write-out '%{http_code}' \
+            --data-urlencode 'name=Solarist Production Diagnostic' \
+            --data-urlencode 'company=Solarist' \
+            --data-urlencode "email=${TEST_EMAIL}" \
+            --data-urlencode 'project_market=Internal company workflow' \
+            --data-urlencode 'service=Website form integration test' \
+            --data-urlencode 'message=Production diagnostic for Sheet logging, owner email, visitor email and confirmation response.' \
+            --data-urlencode 'source_url=github-actions:repair-and-verify' \
+            "$ENDPOINT")
+          curl_exit=$?
+          export HTTP_CODE="$http_code" CURL_EXIT="$curl_exit"
+
+          python - <<'PY'
+          import datetime as dt
+          import html
+          import json
+          import os
+          import re
+          import urllib.parse
+          from pathlib import Path
+
+          raw_path = Path('/tmp/solarist-apps-script-response.html')
+          raw = raw_path.read_text(encoding='utf-8', errors='replace') if raw_path.exists() else ''
+          payload = None
+          parse_error = ''
+
+          try:
+              match = re.search(r'window\.location\.replace\(("(?:\\.|[^"\\])*")\)', raw)
+              if match:
+                  bridge_url = json.loads(match.group(1))
+                  fragment = urllib.parse.urlsplit(bridge_url).fragment
+                  payload = json.loads(urllib.parse.unquote(fragment))
+              else:
+                  direct = re.search(r'window\.parent\.postMessage\((\{.*?\}),\s*["\']\*["\']\)', raw, re.S)
+                  if direct:
+                      payload = json.loads(direct.group(1))
+                  else:
+                      parse_error = 'No Solarist response payload was found in the returned HTML.'
+          except Exception as exc:
+              parse_error = f'{type(exc).__name__}: {exc}'
+
+          timestamp = dt.datetime.now(dt.timezone.utc).isoformat()
+          http_code = os.environ.get('HTTP_CODE', '')
+          curl_exit = os.environ.get('CURL_EXIT', '')
+          status = 'PASS' if isinstance(payload, dict) and payload.get('ok') and payload.get('logged') else 'FAIL'
+
+          lines = [
+              '# Solarist enquiry endpoint diagnostic',
+              '',
+              f'- Checked: `{timestamp}`',
+              f'- HTTP status: `{http_code}`',
+              f'- curl exit code: `{curl_exit}`',
+              f'- Result: **{status}**',
+              '',
+              '## Parsed response',
+              '',
+              '```json',
+              json.dumps(payload, indent=2, ensure_ascii=False) if payload is not None else json.dumps({'parseError': parse_error}, indent=2),
+              '```',
+              '',
+              '## Returned HTML excerpt',
+              '',
+              '```html',
+              raw[:6000],
+              '```',
+              '',
+          ]
+          Path('diagnostics/apps-script-latest.md').write_text('\n'.join(lines), encoding='utf-8')
+          PY
+
+      - name: Commit repair and diagnostic
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html diagnostics/apps-script-latest.md
+          if git diff --cached --quiet; then
+            echo 'No repository changes were needed.'
+          else
+            git commit -m 'Repair enquiry response handling and record endpoint diagnostic'
+            git push
+          fi
