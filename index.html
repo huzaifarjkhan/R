@@ -403,4 +403,51 @@ const h=document.getElementById('header'),m=document.getElementById('menu'),n=do
   });
 })();
 </script>
+
+<script id="solarist-clean-section-navigation">
+(() => {
+  const cleanAddress = () => `${window.location.pathname}${window.location.search}`;
+
+  const findSection = hash => {
+    if (!hash || hash === '#') return null;
+    try {
+      return document.getElementById(decodeURIComponent(hash.slice(1)));
+    } catch (_) {
+      return null;
+    }
+  };
+
+  const scrollWithoutHash = (hash, behavior = 'smooth') => {
+    const section = findSection(hash);
+    if (!section) return false;
+    section.scrollIntoView({ behavior, block: 'start' });
+    window.history.replaceState(window.history.state, '', cleanAddress());
+    return true;
+  };
+
+  document.addEventListener('click', event => {
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey || event.ctrlKey || event.shiftKey || event.altKey
+    ) return;
+
+    const link = event.target.closest('a[href^="#"]');
+    if (!link) return;
+
+    const hash = link.getAttribute('href');
+    if (!findSection(hash)) return;
+
+    event.preventDefault();
+    scrollWithoutHash(hash, 'smooth');
+  });
+
+  if (window.location.hash) {
+    const initialHash = window.location.hash;
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => scrollWithoutHash(initialHash, 'auto'));
+    });
+  }
+})();
+</script>
 </body></html>
