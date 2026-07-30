@@ -5,6 +5,8 @@ on:
     branches:
       - main
   workflow_dispatch:
+  issues:
+    types: [opened]
 
 permissions:
   contents: read
@@ -17,6 +19,7 @@ concurrency:
 
 jobs:
   build:
+    if: github.event_name != 'issues' || github.event.issue.title == 'Deploy Solarist website'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -41,6 +44,7 @@ jobs:
           include-hidden-files: true
 
   deploy:
+    if: github.event_name != 'issues' || github.event.issue.title == 'Deploy Solarist website'
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 10
