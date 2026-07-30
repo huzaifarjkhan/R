@@ -25,13 +25,30 @@ jobs:
 
           path = Path('index.html')
           text = path.read_text(encoding='utf-8')
-          old = "if (!pending || event.origin !== window.location.origin) return;"
-          new = "if (!pending || event.source !== sink.contentWindow) return;"
+          current = (
+              "  window.addEventListener('message', event => {\n"
+              "    if (!pending || event.source !== sink.contentWindow) return;"
+          )
+          original = (
+              "  window.addEventListener('message', event => {\n"
+              "    if (!pending || event.origin !== window.location.origin) return;"
+          )
+          replacement = (
+              "  const responseOrigins = new Set([\n"
+              "    window.location.origin,\n"
+              "    'https://solarist.in',\n"
+              "    'https://www.solarist.in',\n"
+              "  ]);\n\n"
+              "  window.addEventListener('message', event => {\n"
+              "    if (!pending || !responseOrigins.has(event.origin)) return;"
+          )
 
-          if old in text:
-              text = text.replace(old, new, 1)
-          elif new not in text:
-              raise SystemExit('Enquiry message guard was not found.')
+          if current in text:
+              text = text.replace(current, replacement, 1)
+          elif original in text:
+              text = text.replace(original, replacement, 1)
+          elif 'const responseOrigins = new Set([' not in text:
+              raise SystemExit('Enquiry message listener was not found.')
 
           path.write_text(text, encoding='utf-8')
           PY
@@ -73,15 +90,18 @@ jobs:
           parse_error = ''
 
           try:
-              match = re.search(r'window\.location\.replace\(("(?:\\.|[^"\\])*")\)', raw)
-              if match:
-                  bridge_url = json.loads(match.group(1))
+              direct_redirect = re.search(r'window\.location\.replace\(("(?:\\.|[^"\\])*")\)', raw)
+              encoded_bridge = re.search(r'enquiry-response\.html#(%7B.*?%7D)', raw)
+              if direct_redirect:
+                  bridge_url = json.loads(direct_redirect.group(1))
                   fragment = urllib.parse.urlsplit(bridge_url).fragment
                   payload = json.loads(urllib.parse.unquote(fragment))
+              elif encoded_bridge:
+                  payload = json.loads(urllib.parse.unquote(encoded_bridge.group(1)))
               else:
-                  direct = re.search(r'window\.parent\.postMessage\((\{.*?\}),\s*["\']\*["\']\)', raw, re.S)
-                  if direct:
-                      payload = json.loads(direct.group(1))
+                  direct_message = re.search(r'window\.parent\.postMessage\((\{.*?\}),\s*["\']\*["\']\)', raw, re.S)
+                  if direct_message:
+                      payload = json.loads(direct_message.group(1))
                   else:
                       parse_error = 'No Solarist response payload was found in the returned HTML.'
           except Exception as exc:
@@ -126,6 +146,6 @@ jobs:
           if git diff --cached --quiet; then
             echo 'No repository changes were needed.'
           else
-            git commit -m 'Repair enquiry confirmation and record backend diagnostic'
+            git commit -m 'Allow trusted Solarist enquiry responses and verify backend'
             git push
           fi
