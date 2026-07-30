@@ -79,7 +79,7 @@ jobs:
               await page.fill('#company', 'Solarist');
               await page.fill('#email', process.env.TEST_EMAIL);
               await page.selectOption('#market', { label: 'Internal company workflow' });
-              await page.selectOption('#service', { label: 'Website form integration test' });
+              await page.selectOption('#service', { label: 'Other technical enquiry' });
               await page.fill('#message', 'Live browser verification of Sheet logging, both emails, and the confirmation popup.');
               await page.click('#solaristEnquiryForm button[type="submit"]');
               await page.waitForSelector('#enquiryConfirmation.is-open', { state: 'visible', timeout: 45000 });
