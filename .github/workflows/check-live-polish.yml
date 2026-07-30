@@ -1,0 +1,48 @@
+name: Check live Solarist enquiry polish
+
+on:
+  issues:
+    types: [opened]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    if: github.event_name != 'issues' || github.event.issue.title == 'Check Solarist enquiry polish'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v5
+      - name: Check published markup
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p diagnostics
+          html=$(curl --silent --show-error --location --max-time 30 https://solarist.in/)
+          result=PASS
+          reason='The polished enquiry modal and autocomplete markup are live.'
+          grep -q 'solarist-enquiry-experience-v2' <<<"$html" || { result=FAIL; reason='The polished modal stylesheet marker is not live.'; }
+          grep -q 'data-state="idle"' <<<"$html" || { result=FAIL; reason='The new modal state markup is not live.'; }
+          grep -q 'autocomplete="on"' <<<"$html" || { result=FAIL; reason='The enhanced autocomplete markup is not live.'; }
+          cat > diagnostics/live-polish-marker.md <<EOF
+          # Solarist live enquiry polish check
+
+          - Checked: \`$(date -u +'%Y-%m-%dT%H:%M:%SZ')\`
+          - Result: **${result}**
+          - Detail: ${reason}
+          EOF
+      - name: Commit check result
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add diagnostics/live-polish-marker.md
+          if git diff --cached --quiet; then
+            echo 'No check result change.'
+          else
+            git commit -m 'Record live enquiry polish publication check'
+            git push
+          fi
