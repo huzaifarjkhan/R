@@ -1,0 +1,57 @@
+name: Check live clean navigation
+
+on:
+  issues:
+    types: [opened]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    if: github.event_name != 'issues' || github.event.issue.title == 'Check Solarist clean navigation'
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Check published navigation
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p diagnostics
+          result=FAIL
+          reason='The clean section navigation marker was not published within the verification window.'
+          for attempt in $(seq 1 30); do
+            html=$(curl --silent --show-error --location --max-time 30 https://solarist.in/ || true)
+            if grep -q 'solarist-clean-section-navigation' <<<"$html"; then
+              result=PASS
+              reason='The live website is serving clean same-page navigation without URL fragments.'
+              break
+            fi
+            sleep 10
+          done
+          cat > diagnostics/clean-navigation-live.md <<EOF
+          # Solarist clean navigation verification
+
+          - Checked: \`$(date -u +'%Y-%m-%dT%H:%M:%SZ')\`
+          - Result: **${result}**
+          - Detail: ${reason}
+          EOF
+          test "$result" = PASS
+
+      - name: Commit verification result
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add diagnostics/clean-navigation-live.md
+          if git diff --cached --quiet; then
+            echo 'No verification result change.'
+          else
+            git commit -m 'Record clean navigation live verification'
+            git push
+          fi
