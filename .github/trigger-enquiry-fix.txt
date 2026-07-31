@@ -1,1 +1,0 @@
-Apply Solarist enquiry logging fix
