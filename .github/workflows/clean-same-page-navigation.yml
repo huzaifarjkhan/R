@@ -1,4 +1,4 @@
-name: Clean Solarist same-page navigation
+name: One-time Solarist Actions cleanup
 
 on:
   issues:
@@ -7,90 +7,192 @@ on:
 
 permissions:
   contents: write
+  actions: write
+  issues: write
 
 jobs:
-  apply:
-    if: github.event_name != 'issues' || github.event.issue.title == 'Clean Solarist section URLs'
+  cleanup:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.issue.title == 'Clean Solarist Actions storage' &&
+       github.event.issue.user.login == github.repository_owner)
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
 
-      - name: Add clean same-page navigation
+      - name: Delete stored Actions artifacts and caches
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
-          from pathlib import Path
+          import json
+          import os
+          import urllib.error
+          import urllib.request
 
-          path = Path('index.html')
-          text = path.read_text(encoding='utf-8')
-          marker = 'id="solarist-clean-section-navigation"'
-          if marker in text:
-              raise SystemExit('Clean section navigation is already installed.')
+          api = os.environ['GITHUB_API_URL']
+          repo = os.environ['GITHUB_REPOSITORY']
+          token = os.environ['GH_TOKEN']
+          headers = {
+              'Accept': 'application/vnd.github+json',
+              'Authorization': f'Bearer {token}',
+              'X-GitHub-Api-Version': '2022-11-28',
+              'User-Agent': 'solarist-actions-cleanup',
+          }
 
-          script = r'''
-<script id="solarist-clean-section-navigation">
-(() => {
-  const cleanAddress = () => `${window.location.pathname}${window.location.search}`;
+          def request(method, url):
+              req = urllib.request.Request(url, method=method, headers=headers)
+              try:
+                  with urllib.request.urlopen(req, timeout=30) as response:
+                      body = response.read()
+                      return json.loads(body) if body else None
+              except urllib.error.HTTPError as error:
+                  detail = error.read().decode('utf-8', 'replace')
+                  raise RuntimeError(f'{method} {url} failed: {error.code} {detail}') from error
 
-  const findSection = hash => {
-    if (!hash || hash === '#') return null;
-    try {
-      return document.getElementById(decodeURIComponent(hash.slice(1)));
-    } catch (_) {
-      return null;
-    }
-  };
+          artifact_count = artifact_bytes = 0
+          page = 1
+          while True:
+              data = request('GET', f'{api}/repos/{repo}/actions/artifacts?per_page=100&page={page}')
+              items = data.get('artifacts', [])
+              if not items:
+                  break
+              for item in items:
+                  artifact_count += 1
+                  artifact_bytes += int(item.get('size_in_bytes') or 0)
+                  request('DELETE', f"{api}/repos/{repo}/actions/artifacts/{item['id']}")
+              page += 1
 
-  const scrollWithoutHash = (hash, behavior = 'smooth') => {
-    const section = findSection(hash);
-    if (!section) return false;
-    section.scrollIntoView({ behavior, block: 'start' });
-    window.history.replaceState(window.history.state, '', cleanAddress());
-    return true;
-  };
+          cache_count = cache_bytes = 0
+          page = 1
+          while True:
+              data = request('GET', f'{api}/repos/{repo}/actions/caches?per_page=100&page={page}')
+              items = data.get('actions_caches', [])
+              if not items:
+                  break
+              for item in items:
+                  cache_count += 1
+                  cache_bytes += int(item.get('size_in_bytes') or 0)
+                  request('DELETE', f"{api}/repos/{repo}/actions/caches/{item['id']}")
+              page += 1
 
-  document.addEventListener('click', event => {
-    if (
-      event.defaultPrevented ||
-      event.button !== 0 ||
-      event.metaKey || event.ctrlKey || event.shiftKey || event.altKey
-    ) return;
-
-    const link = event.target.closest('a[href^="#"]');
-    if (!link) return;
-
-    const hash = link.getAttribute('href');
-    if (!findSection(hash)) return;
-
-    event.preventDefault();
-    scrollWithoutHash(hash, 'smooth');
-  });
-
-  if (window.location.hash) {
-    const initialHash = window.location.hash;
-    window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(() => scrollWithoutHash(initialHash, 'auto'));
-    });
-  }
-})();
-</script>
-'''
-
-          closing = '</body></html>'
-          if closing not in text:
-              raise SystemExit('Closing body marker not found.')
-          text = text.replace(closing, script + closing, 1)
-          path.write_text(text, encoding='utf-8')
+          with open('/tmp/solarist-cleanup.env', 'w', encoding='utf-8') as output:
+              output.write(f'ARTIFACT_COUNT={artifact_count}\n')
+              output.write(f'ARTIFACT_BYTES={artifact_bytes}\n')
+              output.write(f'CACHE_COUNT={cache_count}\n')
+              output.write(f'CACHE_BYTES={cache_bytes}\n')
+          print(f'Deleted {artifact_count} artifacts ({artifact_bytes} bytes) and {cache_count} caches ({cache_bytes} bytes).')
           PY
 
-      - name: Commit navigation improvement
+      - name: Remove obsolete automation and public diagnostics
         shell: bash
         run: |
           set -euo pipefail
+          source /tmp/solarist-cleanup.env
+
+          git rm --ignore-unmatch \
+            .github/trigger-enquiry-fix.txt \
+            .github/website-interaction-fix-trigger.txt \
+            .github/workflows/apply-solarist-honeypot-fix.yml \
+            .github/workflows/apply-website-interaction-fixes.yml \
+            .github/workflows/check-clean-navigation-live.yml \
+            .github/workflows/check-live-polish.yml \
+            .github/workflows/clean-same-page-navigation.yml \
+            .github/workflows/fix-enquiry-form.yml \
+            .github/workflows/fix-solarist-honeypot.yml \
+            .github/workflows/polish-enquiry-experience.yml \
+            .github/workflows/test-solarist-enquiry.yml \
+            .github/workflows/verify-enquiry-ux.yml \
+            .github/workflows/verify-live-enquiry.yml \
+            apps-script/Solarist_FormToSheet.gs \
+            diagnostics/apps-script-latest.md \
+            diagnostics/clean-navigation-live.md \
+            diagnostics/live-form-latest.md \
+            diagnostics/live-polish-marker.md
+
+          cat > .github/workflows/deploy-pages.yml <<'YAML'
+          name: Deploy Solarist to GitHub Pages
+
+          on:
+            push:
+              branches:
+                - main
+            workflow_dispatch:
+
+          permissions:
+            contents: read
+            pages: write
+            id-token: write
+
+          concurrency:
+            group: pages
+            cancel-in-progress: true
+
+          jobs:
+            build:
+              runs-on: ubuntu-latest
+              timeout-minutes: 10
+              steps:
+                - name: Checkout
+                  uses: actions/checkout@v6
+
+                - name: Validate static site
+                  shell: bash
+                  run: |
+                    set -euo pipefail
+                    test -s index.html
+                    test -s CNAME
+                    test "$(tr -d '\r\n' < CNAME)" = "solarist.in"
+
+                - name: Configure Pages
+                  uses: actions/configure-pages@v6
+
+                - name: Upload site artifact
+                  uses: actions/upload-pages-artifact@v5
+                  with:
+                    path: .
+                    retention-days: 1
+                    include-hidden-files: true
+
+            deploy:
+              needs: build
+              runs-on: ubuntu-latest
+              timeout-minutes: 10
+              environment:
+                name: github-pages
+                url: ${{ steps.deployment.outputs.page_url }}
+              steps:
+                - name: Deploy to GitHub Pages
+                  id: deployment
+                  uses: actions/deploy-pages@v5
+          YAML
+
+          git add .github/workflows/deploy-pages.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html
-          git commit -m 'Keep same-page navigation URLs clean'
+          git commit \
+            -m 'Remove redundant Actions workflows and public diagnostics' \
+            -m "Deleted ${ARTIFACT_COUNT} stored artifacts (${ARTIFACT_BYTES} bytes) and ${CACHE_COUNT} caches (${CACHE_BYTES} bytes)."
           git push
+
+      - name: Close maintenance issue
+        if: github.event_name == 'issues'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail-with-body --silent --show-error \
+            --request PATCH \
+            --header 'Accept: application/vnd.github+json' \
+            --header "Authorization: Bearer ${GH_TOKEN}" \
+            --header 'X-GitHub-Api-Version: 2022-11-28' \
+            "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/issues/${ISSUE_NUMBER}" \
+            --data '{"state":"closed","state_reason":"completed"}' >/dev/null
