@@ -140,7 +140,7 @@ function verifyTurnstile_(token) {
   if (!data.success || (host !== 'solarist.in' && host !== 'www.solarist.in')) {
     throw new Error('turnstile_invalid');
   }
-  if (data.action && data.action !== 'solarist_enquiry') {
+  if (data.action !== 'solarist_enquiry') {
     throw new Error('turnstile_action');
   }
 }
@@ -168,7 +168,7 @@ function reserveSubmission_(input) {
 
     // Persist reservation before storage and email to prevent concurrent floods.
     props.setProperty(counterKey, String(daily + 1));
-    cache.put(emailKey, '1', 1800); // One enquiry/email every 30 minutes.
+    cache.put(emailKey, '1', 600); // One enquiry/email every 10 minutes.
     cache.put(messageKey, '1', 21600); // Identical repeat blocked for 6 hours.
     // Clean up yesterday's counter; key for previous UTC day only.
     const yesterday = Utilities.formatDate(
@@ -325,4 +325,40 @@ function frameResponse_(payload) {
     JSON.stringify(bridge) + ');<\/script>';
   return HtmlService.createHtmlOutput(html)
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+/** Run in the Apps Script editor to verify filtering without writing rows/emails. */
+function testSolaristSpamValidation() {
+  function check(payload, expectedBlocked) {
+    let rejected = false;
+    try {
+      validateInput_(normaliseInput_(payload), payload);
+    } catch (error) {
+      rejected = true;
+    }
+    if (rejected !== expectedBlocked) {
+      throw new Error('Spam validation self-test failure: ' + JSON.stringify({
+        name: payload.name, expectedBlocked: expectedBlocked, rejected: rejected
+      }));
+    }
+  }
+  const normal = {
+    name: 'Example Customer',
+    company: 'Solar project company',
+    email: 'customer@example.com',
+    service: 'Solar PV engineering',
+    project_market: 'Commercial',
+    message: 'We need an estimate for a commercial rooftop PV project.',
+    source_url: 'https://solarist.in/'
+  };
+  check(normal, false);
+  check(Object.assign({}, normal, {_honey: 'filled'}), true);
+  check(Object.assign({}, normal, {source_url: ''}), true);
+  check(Object.assign({}, normal, {message: 'hi'}), true);
+  check(Object.assign({}, normal, {
+    name: 'Вам перевод 150634 руб. забрать тут https://goo.su/ilY8P'
+  }), true);
+  check(Object.assign({}, normal, {project_market: 'Fake market'}), true);
+  Logger.log('Solarist spam-filter validation passed (6 cases, zero emails/rows).');
+  return true;
 }
