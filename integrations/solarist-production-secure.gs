@@ -13,8 +13,6 @@
 const SOLARIST_CONFIG = Object.freeze({
   SPREADSHEET_ID: '171C7idoa4j-VCMol6JI13D0HYExfY62C1L0uDvtqdSo',
   SHEET_NAME: 'Enquiries',
-  OWNER_EMAIL: 'huzaifarjkhan@gmail.com',
-  TEST_EMAIL: 'huzaifarjkhan@gmail.com',
   RESPONSE_SOURCE: 'solarist-enquiry-v1',
   RESPONSE_BRIDGE: 'https://solarist.in/enquiry-response.html',
   MAX_DAILY_SUBMISSIONS: 100, // emergency damage cap, tune after traffic analysis
@@ -31,12 +29,22 @@ const SOLARIST_MARKETS = Object.freeze([
   'Internal company workflow', 'Not sure yet'
 ]);
 
+function solaristOwnerEmail_() {
+  const override = PropertiesService.getScriptProperties().getProperty('SOLARIST_OWNER_EMAIL');
+  const email = override || Session.getEffectiveUser().getEmail();
+  if (!email || !/^[^\\s@]+@[^\\s@]+\\.[A-Za-z]{2,}$/.test(email)) {
+    throw new Error('Configure SOLARIST_OWNER_EMAIL in Script Properties');
+  }
+  return email;
+}
+
 function authorizeSolaristEnquiries() {
   const spreadsheet = SpreadsheetApp.openById(SOLARIST_CONFIG.SPREADSHEET_ID);
   const sheet = spreadsheet.getSheetByName(SOLARIST_CONFIG.SHEET_NAME);
   if (!sheet) throw new Error('Sheet tab not found');
   Logger.log('Connected to: ' + spreadsheet.getName() + ' / ' + sheet.getName());
   Logger.log('Remaining recipient quota: ' + MailApp.getRemainingDailyQuota());
+  Logger.log('Owner notifications configured: ' + !!solaristOwnerEmail_());
   Logger.log('Turnstile configured: ' +
     !!PropertiesService.getScriptProperties().getProperty('TURNSTILE_SECRET'));
 }
@@ -46,7 +54,7 @@ function testSolaristEnquiry() {
   const input = {
     name: 'Solarist Integration Test',
     company: 'Solarist',
-    email: SOLARIST_CONFIG.TEST_EMAIL,
+    email: solaristOwnerEmail_(),
     service: 'Website form integration test',
     projectMarket: 'Internal company workflow',
     requirements: 'Automated test of Google Sheet logging and both MailApp notifications.',
@@ -257,7 +265,7 @@ function sendEnquiryEmails_(input, submittedAt, submittedDisplay) {
   ].join('\n');
   try {
     MailApp.sendEmail({
-      to: SOLARIST_CONFIG.OWNER_EMAIL, replyTo: input.email,
+      to: solaristOwnerEmail_(), replyTo: input.email,
       subject: 'New Solarist enquiry — ' + input.service,
       body: 'A new Solarist website enquiry has been received.\n\n' + details,
       htmlBody: ownerHtml_(input, submittedDisplay),
@@ -267,7 +275,7 @@ function sendEnquiryEmails_(input, submittedAt, submittedDisplay) {
   } catch (error) { console.error('Owner email failed: ' + error); }
   try {
     MailApp.sendEmail({
-      to: input.email, replyTo: SOLARIST_CONFIG.OWNER_EMAIL,
+      to: input.email, replyTo: solaristOwnerEmail_(),
       subject: 'We received your Solarist enquiry',
       body: 'Hello ' + input.name + ',\n\nThank you for contacting Solarist. Your enquiry has been received. We will review the details and respond within one to two business days.\n\nService: ' + input.service + '\nSubmitted: ' + submittedDisplay + '\n\nRegards,\nSolarist\nEngineering expertise. Practical automation.',
       htmlBody: visitorHtml_(input, submittedDisplay),
