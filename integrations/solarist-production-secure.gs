@@ -30,11 +30,15 @@ const SOLARIST_MARKETS = Object.freeze([
 ]);
 
 function solaristOwnerEmail_() {
-  const override = PropertiesService.getScriptProperties().getProperty('SOLARIST_OWNER_EMAIL');
-  const email = override || Session.getEffectiveUser().getEmail();
-  if (!email || !/^[^\\s@]+@[^\\s@]+\\.[A-Za-z]{2,}$/.test(email)) {
-    throw new Error('Configure SOLARIST_OWNER_EMAIL in Script Properties');
+  const email = String(
+    PropertiesService.getScriptProperties()
+      .getProperty('SOLARIST_OWNER_EMAIL') || ''
+  ).trim();
+
+  if (!email) {
+    throw new Error('SOLARIST_OWNER_EMAIL is missing.');
   }
+
   return email;
 }
 
