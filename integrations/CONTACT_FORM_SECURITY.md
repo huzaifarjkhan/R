@@ -4,9 +4,9 @@
 
 ## 1. Emergency protection (do this first)
 
-1. Open [Solarist Website Enquiries](https://docs.google.com/spreadsheets/d/171C7idoa4j-VCMol6JI13D0HYExfY62C1L0uDvtqdSo/edit) > Extensions > Apps Script.
+1. Open your **Solarist Website Enquiries** spreadsheet > Extensions > Apps Script.
 2. Replace the entire current **Code.gs** with [solarist-production-secure.gs](./solarist-production-secure.gs). Do **not** paste just the old independent `enquiry-spam-guard.gs`; use the complete production handler.
-3. Save. In function dropdown select `testSolaristSpamValidation`, press Run. Expected result: *6 cases passed, zero emails/rows*.
+3. Save. In the function dropdown select `testSolaristSpamValidation`, press Run. Expected result: *6 cases passed, zero emails/rows*. Next run `authorizeSolaristEnquiries` to verify sheet access and notification identity. If owner email cannot be resolved, set Script Property `SOLARIST_OWNER_EMAIL` to your own address (never put it in public GitHub).
 4. Deploy > Manage deployments > choose the **currently active Web app** > Edit > Version: **New version** > Deploy. Use the original "Execute as: Me / Who has access: Anyone" settings. This updates the same web-app URL without needing to change the HTML.
 5. Submit **one legitimate enquiry** from https://solarist.in/#contact using at least 12 characters in Requirements. Check success popup, row appended, and both emails. Allow 10 minutes between test submissions from the same email address.
 6. Re-run a validation-only test if needed. `testSolaristEnquiry` is different: it intentionally writes a labelled row and sends test emails and should only be run manually in the editor.
